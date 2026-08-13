@@ -18,15 +18,19 @@ export const generateToken = (user: IUser): string => {
 export const setAuthCookie = (res: Response, token: string): void => {
   res.cookie('token', token, {
     httpOnly: true, // Immune to XSS script reading
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: true,   // Mandatory for sameSite: 'none' over HTTPS
+    sameSite: 'none', // Crucial for cross-domain Vercel <-> Render cookies
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/',
   });
 };
 
 export const clearAuthCookie = (res: Response): void => {
   res.cookie('token', '', {
     httpOnly: true,
+    secure: true,
+    sameSite: 'none',
     expires: new Date(0),
+    path: '/',
   });
 };
