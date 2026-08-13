@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-axios.defaults.baseURL = 'http://localhost:5000/api/v1';
+// Dynamically select Render URL when running in production/Vercel, or localhost when in dev
+axios.defaults.baseURL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.MODE === 'production'
+    ? 'https://campusgpt-backend-oscx.onrender.com/api/v1'
+    : 'http://localhost:5000/api/v1');
+
 axios.defaults.withCredentials = true;
 
 export interface User {
@@ -98,7 +104,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuth: async () => {
-    // If the user was just authenticated by login(), don't wipe out the session
     if (get().isAuthenticated && get().user) {
       set({ isLoading: false });
       return;
