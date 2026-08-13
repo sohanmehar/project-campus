@@ -1,21 +1,21 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-// Sanitize env variable to remove accidental brackets or quotes
+// Ensure clean string URL assignment & sanitize env variables
 const rawApiUrl = import.meta.env.VITE_API_BASE_URL || '';
 const cleanApiUrl = rawApiUrl.replace(/[\[\]"']/g, '').trim();
 
-const BASE_URL =
-  cleanApiUrl.startsWith('http')
-    ? cleanApiUrl
-    : import.meta.env.MODE === 'production'
-    ? 'https://campusgpt-backend-oscx.onrender.com/api/v1'
-    : 'http://localhost:5000/api/v1';
+const BASE_URL = cleanApiUrl.startsWith('http')
+  ? cleanApiUrl
+  : (import.meta.env.MODE === 'production'
+      ? 'https://campusgpt-backend-oscx.onrender.com/api/v1'
+      : 'http://localhost:5000/api/v1');
 
-axios.defaults.baseURL = BASE_URL.replace(/\/+$/, '');
+// Set base URL explicitly
+axios.defaults.baseURL = BASE_URL.replace(/\/+$/, ''); // removes trailing slashes if any
 axios.defaults.withCredentials = true;
 
-// Attach Bearer token from sessionStorage (tab-isolated) to all outgoing requests
+// Attach Bearer token from sessionStorage (isolated per tab) to all outgoing requests
 axios.interceptors.request.use((config) => {
   const token = sessionStorage.getItem('campusgpt_token');
   if (token) {
