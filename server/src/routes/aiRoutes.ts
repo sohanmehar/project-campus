@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticateToken);
 
 router.post('/query', handleAiQuery);
+router.post('/chat', handleAiQuery);
 router.get('/history', getChatHistory);
 
 export default router;

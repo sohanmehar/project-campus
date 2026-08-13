@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import { 
   getAdminStats, 
+  getAllUsers,
+  updateUserRole,
+  deleteUser,
   getStudentsRegistry, 
   toggleStudentStatus,
   importStudentsBulk,
+  addStudent,
   getFacultyList,
   addFacultyMember,
   importFacultyBulk,
@@ -16,7 +20,8 @@ import {
   deleteCourseFromDepartment,
   getSystemSettings,
   updateSystemSettings,
-  getAiPlatformMetrics
+  getAiPlatformMetrics,
+  globalSearch
 } from '../controllers/adminController';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware';
 
@@ -24,16 +29,22 @@ const router = Router();
 
 router.use(authenticateToken);
 
-// Allow both Faculty and Admin to read department catalog
+// Public search & Department catalog read
+router.get('/search', globalSearch);
 router.get('/departments', requireRole(['admin', 'faculty', 'student']), getDepartments);
 
-// Restrict administrative mutations to Admin only
+// Restricted Administrative Mutations
 router.use(requireRole(['admin']));
 
 router.get('/stats', getAdminStats);
+router.get('/users', getAllUsers);
+router.patch('/users/:id/role', updateUserRole);
+router.delete('/users/:id', deleteUser);
+
 router.get('/students', getStudentsRegistry);
 router.patch('/students/:id/status', toggleStudentStatus);
 router.post('/students/bulk-import', importStudentsBulk);
+router.post('/students', addStudent);
 
 router.get('/faculty', getFacultyList);
 router.post('/faculty', addFacultyMember);

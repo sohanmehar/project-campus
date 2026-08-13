@@ -2,22 +2,21 @@ import { Response } from 'express';
 import mongoose from 'mongoose';
 import User from '../models/User';
 import Assignment from '../models/Assignment';
-import Placement from '../models/Placement';
 import AIConversation from '../models/AIConversation';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 // @desc    Handle AI Copilot Query & Save Chat
-// @route   POST /api/v1/ai/query
+// @route   POST /api/v1/ai/query & /api/v1/ai/chat
 // @access  Private
 export const handleAiQuery = async (req: AuthRequest, res: Response) => {
   try {
-    const { query, prompt, sessionId } = req.body;
-    const userPrompt = query || prompt || 'Hello';
+    const { query, prompt, message, sessionId, agentId } = req.body;
+    const userPrompt = message || query || prompt || 'Hello';
     const userId = req.user?.id;
-    const userRole = req.user?.role || 'faculty';
+    const userRole = req.user?.role || 'student';
     const lowerQuery = userPrompt.toLowerCase();
 
-    let userName = 'Faculty User';
+    let userName = 'Student User';
     if (userId && mongoose.Types.ObjectId.isValid(userId)) {
       const user = await User.findById(userId);
       if (user?.name) userName = user.name;
@@ -25,24 +24,28 @@ export const handleAiQuery = async (req: AuthRequest, res: Response) => {
 
     let answer = '';
 
-    // Smart Rule Engine Responses
-    if (lowerQuery.includes('how many students') || lowerQuery.includes('enrolled')) {
+    // Specialized Agent Context Routing
+    if (agentId === 'academic-advisor') {
+      answer = `[Academic Advisor Agent]: Hello ${userName}! Based on your current CGPA and course track, I recommend prioritizing Operating Systems and MongoDB Atlas query optimization this semester.`;
+    } else if (agentId === 'resume-reviewer') {
+      answer = `[Placement Reviewer Agent]: Your MERN stack projects and resume links look great for software roles! Make sure your repositories contain clean README documentation.`;
+    } else if (lowerQuery.includes('how many students') || lowerQuery.includes('enrolled')) {
       const count = await User.countDocuments({ role: 'student' });
       answer = `There are currently ${count || 3} active students enrolled in the Computer Science department roster.`;
     } else if (lowerQuery.includes('quiz') || lowerQuery.includes('multiple-choice') || lowerQuery.includes('normalization')) {
-      answer = `Here are 5 practice quiz questions on Database Normalization (1NF to BCNF):\n\n1. **Q1:** Which normal form eliminates partial functional dependencies?\n   - A) 1NF\n   - **B) 2NF (Correct)**\n   - C) 3NF\n   - D) BCNF\n\n2. **Q2:** A table is in 3NF if it is in 2NF and has no:\n   - **A) Transitive dependencies (Correct)**\n   - B) Multivalued dependencies\n   - C) Partial dependencies\n\n3. **Q3:** In BCNF, for every non-trivial functional dependency X -> Y, X must be a:\n   - **A) Super Key (Correct)**\n   - B) Foreign Key\n   - C) Candidate Attribute`;
+      answer = `Here are 3 practice quiz questions on Database Normalization (1NF to BCNF):\n\n1. **Q1:** Which normal form eliminates partial functional dependencies?\n   - A) 1NF\n   - **B) 2NF (Correct)**\n   - C) 3NF\n\n2. **Q2:** A table is in 3NF if it is in 2NF and has no:\n   - **A) Transitive dependencies (Correct)**\n   - B) Partial dependencies`;
     } else if (lowerQuery.includes('lecture') || lowerQuery.includes('outline') || lowerQuery.includes('deadlock')) {
-      answer = `### 45-Minute Lecture Outline: Operating System Deadlocks\n\n1. **Introduction (10 mins)**: Necessary conditions for deadlock (Mutual Exclusion, Hold & Wait, No Preemption, Circular Wait).\n2. **Banker's Algorithm (20 mins)**: Resource Allocation Graph & Safety State evaluation.\n3. **Interactive Demo (10 mins)**: Step-by-step avoidance calculations.\n4. **Q&A & Wrap-up (5 mins)**.`;
+      answer = `### 45-Minute Lecture Outline: Operating System Deadlocks\n\n1. **Introduction (10 mins)**: Necessary conditions (Mutual Exclusion, Hold & Wait, No Preemption, Circular Wait).\n2. **Banker's Algorithm (20 mins)**: Resource Allocation Graph & Safety State evaluation.\n3. **Interactive Demo (10 mins)**: Step-by-step avoidance calculations.`;
     } else if (lowerQuery.includes('assignment') || lowerQuery.includes('deadline')) {
       const assignments = await Assignment.find().limit(3);
       if (assignments.length > 0) {
         const titles = assignments.map((a) => `'${a.title}'`).join(', ');
-        answer = `Current active assignments include: ${titles}. Check your faculty portal for detailed submissions.`;
+        answer = `Current active assignments in MongoDB include: ${titles}. Check your portal for detailed submissions.`;
       } else {
         answer = 'There are no active assignment deadlines pending evaluation.';
       }
     } else {
-      answer = `Hello ${userName}! I have processed your query regarding "${userPrompt}". I am CampusGPT, ready to assist with course creation, grading rubrics, and academic analytics.`;
+      answer = `Hello ${userName}! I have processed your query regarding "${userPrompt}". I am CampusGPT OS Copilot, ready to assist with coursework, placement preparation, and university analytics.`;
     }
 
     // Persist conversation to MongoDB using AIConversation schema

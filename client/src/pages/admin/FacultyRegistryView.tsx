@@ -42,11 +42,14 @@ export const FacultyRegistryView: React.FC = () => {
         axios.get('/admin/faculty'),
         axios.get('/admin/departments'),
       ]);
-      setFacultyList(facRes.data.faculty);
-      setDepartments(deptRes.data.departments);
-      if (deptRes.data.departments.length > 0) {
-        setNewFaculty((prev) => ({ ...prev, department: deptRes.data.departments[0].name }));
-      }
+      setFacultyList(facRes.data.faculty || []);
+      setDepartments(deptRes.data.departments || []);
+      
+      const defaultDept = deptRes.data.departments?.[0]?.name || 'Computer Science';
+      setNewFaculty((prev) => ({
+        ...prev,
+        department: prev.department || defaultDept,
+      }));
     } catch (err) {
       console.error('Error fetching faculty data', err);
     } finally {
@@ -68,17 +71,20 @@ export const FacultyRegistryView: React.FC = () => {
         ? newFaculty.courses.split(',').map((c) => c.trim())
         : ['Department Elective'];
 
+      const finalDepartment = newFaculty.department || departments[0]?.name || 'Computer Science';
+
       await axios.post('/admin/faculty', {
         ...newFaculty,
+        department: finalDepartment,
         courses: coursesArray,
       });
 
-      addToast('success', 'Faculty Onboarded', `${newFaculty.name} saved to MongoDB.`);
+      addToast('success', 'Faculty Onboarded', `${newFaculty.name} saved directly to MongoDB.`);
       setIsAddModalOpen(false);
       setNewFaculty({
         name: '',
         email: '',
-        department: departments[0]?.name || '',
+        department: departments[0]?.name || 'Computer Science',
         designation: 'Assistant Professor',
         courses: '',
         officeHours: 'Mon/Wed 10:00 AM - 12:00 PM',
@@ -102,7 +108,6 @@ export const FacultyRegistryView: React.FC = () => {
     }
   };
 
-  // CSV Export Feature
   const handleExportCSV = () => {
     const headers = ['Name,Email,Department,Designation,Assigned Courses,Office Hours\n'];
     const rows = facultyList.map(
@@ -121,7 +126,6 @@ export const FacultyRegistryView: React.FC = () => {
     addToast('info', 'Export Complete', 'Faculty roster downloaded as CSV.');
   };
 
-  // Excel / CSV File Import Parser
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -160,16 +164,16 @@ export const FacultyRegistryView: React.FC = () => {
 
   const filteredFaculty = facultyList.filter(
     (f) =>
-      f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.department.toLowerCase().includes(searchQuery.toLowerCase())
+      f.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.department?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
     return (
       <div className="p-8 text-center space-y-3">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-xs text-slate-400">Loading faculty registry from database...</p>
+        <p className="text-xs text-slate-400 font-mono">Loading faculty registry from database...</p>
       </div>
     );
   }

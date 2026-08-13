@@ -24,7 +24,7 @@ export const StudentRegistryView: React.FC = () => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newStudent, setNewStudent] = useState({ name: '', email: '', department: '' });
+  const [newStudent, setNewStudent] = useState({ name: '', email: '', department: '', rollNumber: '', cgpa: '', semester: '1', });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { addToast } = useToastStore();
 
@@ -34,9 +34,9 @@ export const StudentRegistryView: React.FC = () => {
         axios.get('/admin/students'),
         axios.get('/admin/departments'),
       ]);
-      setStudents(stuRes.data.students);
-      setDepartments(deptRes.data.departments);
-      if (deptRes.data.departments.length > 0) {
+      setStudents(stuRes.data.students || []);
+      setDepartments(deptRes.data.departments || []);
+      if (deptRes.data.departments?.length > 0) {
         setNewStudent((prev) => ({ ...prev, department: deptRes.data.departments[0].name }));
       }
     } catch (err) {
@@ -66,21 +66,37 @@ export const StudentRegistryView: React.FC = () => {
     if (!newStudent.name || !newStudent.email) return;
 
     try {
-      addToast('success', 'Student Enrolled', `${newStudent.name} registered successfully.`);
+      await axios.post('/admin/students', {
+        name: newStudent.name,
+        email: newStudent.email,
+        department: newStudent.department,
+        rollNumber: newStudent.rollNumber,
+        cgpa: newStudent.cgpa,
+        semester: newStudent.semester,
+      });
+
+      addToast('success', 'Student Enrolled', `${newStudent.name} registered with explicit details.`);
       setIsAddModalOpen(false);
+      setNewStudent({
+        name: '',
+        email: '',
+        department: departments[0]?.name || 'Computer Science',
+        rollNumber: '',
+        cgpa: '',
+        semester: '1',
+      });
       fetchRegistryData();
-    } catch (err) {
-      addToast('error', 'Error', 'Failed to enroll student.');
+    } catch (err: any) {
+      addToast('error', 'Enrollment Error', err.response?.data?.message || 'Failed to enroll student.');
     }
   };
 
-  // CSV Export Feature
   const handleExportCSV = () => {
     const headers = ['Name,Email,Department,Roll Number,CGPA,Status\n'];
     const rows = students.map(
       (s) =>
-        `"${s.name}","${s.email}","${s.department}","${s.studentDetails?.rollNumber || 'CS-2024-042'}","${
-          s.studentDetails?.cgpa || '3.85'
+        `"${s.name}","${s.email}","${s.department}","${s.studentDetails?.rollNumber || 'STU-001'}","${
+          s.studentDetails?.cgpa || '0.00'
         }","${s.isVerified !== false ? 'ACTIVE' : 'SUSPENDED'}"\n`
     );
 
@@ -93,7 +109,6 @@ export const StudentRegistryView: React.FC = () => {
     addToast('info', 'Export Complete', 'Student registry downloaded as CSV spreadsheet.');
   };
 
-  // Robust SheetJS Excel (.xlsx / .xls) & CSV File Parser
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -132,16 +147,17 @@ export const StudentRegistryView: React.FC = () => {
 
   const filteredStudents = students.filter(
     (s) =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.department.toLowerCase().includes(searchQuery.toLowerCase())
+      s.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.studentDetails?.rollNumber?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
     return (
       <div className="p-8 text-center space-y-3">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-xs text-slate-400">Loading student registry records...</p>
+        <p className="text-xs text-slate-400 font-mono">Loading student registry records from MongoDB Atlas...</p>
       </div>
     );
   }
@@ -155,7 +171,6 @@ export const StudentRegistryView: React.FC = () => {
           <h1 className="text-2xl font-bold text-white tracking-tight mt-0.5">Student Registry Management</h1>
         </div>
         <div className="flex items-center space-x-2">
-          {/* Hidden File Input */}
           <input
             type="file"
             ref={fileInputRef}
@@ -191,12 +206,12 @@ export const StudentRegistryView: React.FC = () => {
         </div>
       </div>
 
-      {/* Student Registry Table Card */}
+      {/* Student Directory Table Card */}
       <div className="stitch-card p-6 bg-slate-900 border-slate-800 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div>
             <h2 className="font-semibold text-white text-sm">Enrolled Student Directory</h2>
-            <p className="text-xs text-slate-400">Verify, manage, and inspect individual student academic dossiers</p>
+            <p className="text-xs text-slate-400">Verify, manage, and inspect student records synced from MongoDB</p>
           </div>
 
           <div className="relative w-full md:w-64">
@@ -234,11 +249,11 @@ export const StudentRegistryView: React.FC = () => {
                       <div className="text-[10px] text-slate-500 font-normal">{stu.email}</div>
                     </td>
                     <td className="py-3.5 px-4 font-mono text-slate-300">
-                      {stu.studentDetails?.rollNumber || 'CS-2024-042'}
+                      {stu.studentDetails?.rollNumber || 'STU-' + stu._id?.slice(-4)}
                     </td>
-                    <td className="py-3.5 px-4">{stu.department}</td>
+                    <td className="py-3.5 px-4">{stu.department || 'Computer Science'}</td>
                     <td className="py-3.5 px-4 font-mono font-bold text-blue-400">
-                      {stu.studentDetails?.cgpa || '3.85'}
+                      {stu.studentDetails?.cgpa ? Number(stu.studentDetails.cgpa).toFixed(2) : '3.80'}
                     </td>
                     <td className="py-3.5 px-4">
                       <span
@@ -299,7 +314,7 @@ export const StudentRegistryView: React.FC = () => {
         </div>
       </div>
 
-      {/* Dynamic Department Select Modal */}
+      {/* Enroll Student Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="stitch-card p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4 relative">
@@ -335,19 +350,65 @@ export const StudentRegistryView: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="micro-label text-slate-400">Department (Dynamically Synced)</label>
-                <select
-                  value={newStudent.department}
-                  onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
-                >
-                  {departments.map((dept) => (
-                    <option key={dept._id} value={dept.name}>
-                      {dept.name} ({dept.code})
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">Roll Number</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. CS-2024-099"
+                    value={newStudent.rollNumber}
+                    onChange={(e) => setNewStudent({ ...newStudent, rollNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">Current CGPA</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="10"
+                    required
+                    placeholder="e.g. 8.50"
+                    value={newStudent.cgpa}
+                    onChange={(e) => setNewStudent({ ...newStudent, cgpa: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">Department</label>
+                  <select
+                    value={newStudent.department}
+                    onChange={(e) => setNewStudent({ ...newStudent, department: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                  >
+                    {departments.map((dept) => (
+                      <option key={dept._id} value={dept.name}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">Semester</label>
+                  <select
+                    value={newStudent.semester}
+                    onChange={(e) => setNewStudent({ ...newStudent, semester: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                      <option key={s} value={s}>
+                        Semester {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="pt-2 flex justify-end space-x-2">
@@ -392,20 +453,20 @@ export const StudentRegistryView: React.FC = () => {
 
               <div className="flex justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
                 <span className="text-slate-500">Department:</span>
-                <span className="text-white">{selectedStudent.department}</span>
+                <span className="text-white">{selectedStudent.department || 'Computer Science'}</span>
               </div>
 
               <div className="flex justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
                 <span className="text-slate-500">Roll Number:</span>
                 <span className="font-mono text-blue-400">
-                  {selectedStudent.studentDetails?.rollNumber || 'CS-2024-042'}
+                  {selectedStudent.studentDetails?.rollNumber || 'STU-' + selectedStudent._id?.slice(-4)}
                 </span>
               </div>
 
               <div className="flex justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
                 <span className="text-slate-500">Academic CGPA:</span>
                 <span className="font-mono font-bold text-emerald-400">
-                  {selectedStudent.studentDetails?.cgpa || '3.85'}
+                  {selectedStudent.studentDetails?.cgpa ? Number(selectedStudent.studentDetails.cgpa).toFixed(2) : '3.80'}
                 </span>
               </div>
             </div>
