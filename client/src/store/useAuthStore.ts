@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-// Dynamically select Render URL when running in production/Vercel, or localhost when in dev
+// Dynamically select API base URL
 axios.defaults.baseURL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.MODE === 'production'
@@ -9,6 +9,15 @@ axios.defaults.baseURL =
     : 'http://localhost:5000/api/v1');
 
 axios.defaults.withCredentials = true;
+
+// Attach Bearer token from localStorage to all outgoing requests
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('campusgpt_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export interface User {
   id: string;
@@ -46,6 +55,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const response = await axios.post('/auth/login', credentials);
       const user = response.data?.user;
+      const token = response.data?.token;
+
+      if (token) {
+        localStorage.setItem('campusgpt_token', token);
+      }
 
       if (user) {
         set({
@@ -72,6 +86,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const response = await axios.post('/auth/signup', userData);
       const user = response.data?.user;
+      const token = response.data?.token;
+
+      if (token) {
+        localStorage.setItem('campusgpt_token', token);
+      }
 
       if (user) {
         set({
@@ -99,6 +118,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err) {
       console.error('Logout error', err);
     } finally {
+      localStorage.removeItem('campusgpt_token');
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
     }
   },
@@ -120,9 +140,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           error: null,
         });
       } else {
+        localStorage.removeItem('campusgpt_token');
         set({ user: null, isAuthenticated: false, isLoading: false, error: null });
       }
     } catch (err) {
+      localStorage.removeItem('campusgpt_token');
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
     }
   },

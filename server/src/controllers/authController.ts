@@ -1,15 +1,14 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import User from '../models/User';
+import { generateToken, setAuthCookie, clearAuthCookie } from '../utils/auth';
 
-// AuthRequest extends Express Request to include authenticated user info
 interface AuthRequest extends Request {
   user?: {
     id: string;
     [key: string]: any;
   };
 }
-import bcrypt from 'bcryptjs';
-import User from '../models/User';
-import { generateToken, setAuthCookie, clearAuthCookie } from '../utils/auth';
 
 // @desc    Register a new user
 // @route   POST /api/v1/auth/signup
@@ -47,6 +46,7 @@ export const signup = async (req: Request, res: Response) => {
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
+      token, // <--- Exposed to client for Authorization header fallback
       user: {
         id: user._id,
         name: user.name,
@@ -123,6 +123,7 @@ export const login = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
+      token, // <--- Exposed to client for Authorization header fallback
       user: {
         id: user._id,
         name: user.name,
@@ -205,11 +206,10 @@ export const updateStudentProfile = async (req: AuthRequest, res: Response) => {
 
     if (bio !== undefined) user.studentDetails!.bio = bio;
     if (skills !== undefined) user.studentDetails!.skills = Array.isArray(skills) ? skills : skills.split(',').map((s: string) => s.trim());
-    // Accept either `linkedinUrl` or `linkedIn` from clients and store both for compatibility
+    
     const resolvedLinkedin = linkedinUrl !== undefined ? linkedinUrl : linkedIn;
     if (resolvedLinkedin !== undefined) {
       user.studentDetails!.linkedinUrl = resolvedLinkedin;
-      // keep legacy/alternate property to avoid TS/runtime issues in other parts
       (user.studentDetails as any).linkedIn = resolvedLinkedin;
     }
     if (githubUrl !== undefined) user.studentDetails!.githubUrl = githubUrl;
