@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { TrendingUp, ShieldCheck, Activity, AlertCircle } from 'lucide-react';
+import { TrendingUp, ShieldCheck, AlertCircle } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 
 export const AdminDashboard: React.FC = () => {

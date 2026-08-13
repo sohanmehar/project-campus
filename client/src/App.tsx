@@ -23,7 +23,6 @@ import { SettingsView } from './pages/student/SettingsView';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { StudentRegistryView } from './pages/admin/StudentRegistryView';
 import { FacultyRegistryView } from './pages/admin/FacultyRegistryView';
-import { AcademicStructureView } from './pages/admin/AcademicStructureView';
 import { AdminPlacementsView } from './pages/admin/AdminPlacementsView';
 import { AiMetricsView } from './pages/admin/AiMetricsView';
 import { SystemSettingsView } from './pages/admin/SystemSettingsView';
