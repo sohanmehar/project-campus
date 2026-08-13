@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // <--- Import useNavigate
 import { useAuthStore } from '../../store/useAuthStore';
 import { Sparkles, Shield, ArrowRight, Lock, Mail } from 'lucide-react';
 
@@ -6,6 +7,7 @@ export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading, error, clearError } = useAuthStore();
+  const navigate = useNavigate(); // <--- Instantiate navigate hook
 
   useEffect(() => {
     clearError();
@@ -16,6 +18,7 @@ export const Login: React.FC = () => {
     if (!email || !password) return;
     try {
       await login({ email, password });
+      navigate('/dashboard', { replace: true }); // <--- Explicit navigation
     } catch (err) {
       // Handled in Zustand store
     }
@@ -27,6 +30,7 @@ export const Login: React.FC = () => {
     setPassword('Password123!');
     try {
       await login({ email: demoEmail, password: 'Password123!' });
+      navigate('/dashboard', { replace: true }); // <--- Explicit navigation
     } catch (err) {
       console.error('Quick login error:', err);
     }
