@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, Sparkles, Sun, Moon } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 
 interface TopBarProps {
@@ -7,7 +7,7 @@ interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ onOpenCommandPalette }) => {
-  const { user } = useAuthStore();
+  useAuthStore();
 
   return (
     <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-6 flex items-center justify-between sticky top-0 z-30">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useToastStore } from '../../store/useToastStore';
-import { Briefcase, Plus, Trash2, MapPin, DollarSign, X } from 'lucide-react';
+import { Plus, Trash2, MapPin, X } from 'lucide-react';
 
 export const AdminPlacementsView: React.FC = () => {
   const [drives, setDrives] = useState<any[]>([]);

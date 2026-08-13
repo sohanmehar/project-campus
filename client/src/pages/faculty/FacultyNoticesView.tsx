@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useToastStore } from '../../store/useToastStore';
-import { Bell, Plus, FileText, Download, ExternalLink, Calendar, CheckCircle, X, Search, Filter } from 'lucide-react';
+import { Bell, Plus, ExternalLink, Calendar, X, Search, Filter } from 'lucide-react';
 
 export const FacultyNoticesView: React.FC = () => {
   const [notices, setNotices] = useState<any[]>([]);

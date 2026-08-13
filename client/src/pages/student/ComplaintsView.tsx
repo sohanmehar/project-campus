@@ -5,7 +5,7 @@ import { useToastStore } from '../../store/useToastStore';
 import { AlertCircle, Plus, Send, X } from 'lucide-react';
 
 export const ComplaintsView: React.FC = () => {
-  const { user } = useAuthStore();
+  useAuthStore();
   const { addToast } = useToastStore();
 
   const [tickets, setTickets] = useState<any[]>([]);

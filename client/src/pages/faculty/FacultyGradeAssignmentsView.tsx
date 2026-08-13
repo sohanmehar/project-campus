@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useToastStore } from '../../store/useToastStore';
-import { Plus, CheckCircle, FileText, ExternalLink, Award, X, BookOpen } from 'lucide-react';
+import { Plus, ExternalLink, X } from 'lucide-react';
 
 export const FacultyGradeAssignmentsView: React.FC = () => {
-  const [assignments, setAssignments] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -22,12 +21,7 @@ export const FacultyGradeAssignmentsView: React.FC = () => {
 
   const fetchFacultyAssignmentsData = async () => {
     try {
-      const [assignRes, subRes] = await Promise.all([
-        axios.get('/assignments'),
-        axios.get('/faculty/submissions'),
-      ]);
-
-      setAssignments(assignRes.data.assignments || []);
+      const subRes = await axios.get('/faculty/submissions');
       setSubmissions(subRes.data.submissions || []);
     } catch (err) {
       console.error('Error fetching assignment data', err);

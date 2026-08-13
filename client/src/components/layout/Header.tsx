@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
-import { Search, Bell, Check, Sparkles } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { user } = useAuthStore();
+  useAuthStore();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);

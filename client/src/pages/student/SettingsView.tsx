@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
-import { User, Mail, Phone, BookOpen, Globe, Code, FileText, Save, CheckCircle2, Shield } from 'lucide-react';
+import { User, Code, Save } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
   const user = useAuthStore((state) => state.user);

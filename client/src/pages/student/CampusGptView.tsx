@@ -17,7 +17,7 @@ import {
 
 export const CampusGptView: React.FC = () => {
   const { user } = useAuthStore();
-  const { addToast } = useToastStore();
+  useToastStore();
   const isFaculty = user?.role === 'faculty';
 
   const [conversations, setConversations] = useState<any[]>([]);

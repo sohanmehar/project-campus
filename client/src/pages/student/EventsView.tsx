@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
-import { Calendar, MapPin, Ticket, QrCode, CheckCircle, X, UserCheck, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Ticket, QrCode, X, UserCheck, Trash2 } from 'lucide-react';
 
 export const EventsView: React.FC = () => {
-  const { user } = useAuthStore();
+  useAuthStore();
   const { addToast } = useToastStore();
 
   const [events, setEvents] = useState<any[]>([]);

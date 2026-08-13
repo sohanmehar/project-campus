@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export const AssignmentsView: React.FC = () => {
-  const { user } = useAuthStore();
+  useAuthStore();
   const { addToast } = useToastStore();
 
   const [assignments, setAssignments] = useState<any[]>([]);

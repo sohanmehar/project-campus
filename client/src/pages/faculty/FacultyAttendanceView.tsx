@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useToastStore } from '../../store/useToastStore';
-import { Users, CheckCircle2, XCircle, Clock, Save, BookOpen, Calendar } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 export const FacultyAttendanceView: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Settings, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { useToastStore } from '../../store/useToastStore';
 
 export const SystemSettingsView: React.FC = () => {

@@ -5,9 +5,7 @@ import {
   BookOpen, 
   Calendar, 
   Briefcase, 
-  TrendingUp,
-  Clock,
-  Layers
+  TrendingUp
 } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {

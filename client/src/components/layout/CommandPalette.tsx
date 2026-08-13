@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Briefcase, Calendar, Sparkles, User, Shield, AlertCircle } from 'lucide-react';
+import { Search, BookOpen, Briefcase, Calendar, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 
 interface CommandPaletteProps {
@@ -10,7 +10,7 @@ interface CommandPaletteProps {
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
   const [query, setQuery] = useState('');
-  const { user } = useAuthStore();
+  useAuthStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

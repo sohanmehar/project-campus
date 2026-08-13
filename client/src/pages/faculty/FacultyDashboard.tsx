@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { 
-  Users, 
-  BookOpen, 
-  FileCheck, 
-  Calendar, 
-  TrendingUp, 
-  CheckCircle,
-  Clock,
-  ArrowRight,
-  ExternalLink
-} from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
+import { BookOpen, TrendingUp, CheckCircle,} from 'lucide-react';
+import { ResponsiveContainer, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 
 const classAttendanceData = [
   { subject: 'Database Systems', attendance: 88 },

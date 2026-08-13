@@ -4,7 +4,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { CheckCircle2, AlertTriangle, BarChart2 } from 'lucide-react';
 
 export const AcademicsView: React.FC = () => {
-  const { user } = useAuthStore();
+  useAuthStore();
   const [loading, setLoading] = useState(true);
   const [overallPercentage, setOverallPercentage] = useState(100);
   const [subjectAnalytics, setSubjectAnalytics] = useState<any[]>([]);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, BookOpen, Briefcase, Code, ArrowRight, Sparkles } from 'lucide-react';
+import { BookOpen, Briefcase, Code, ArrowRight, Sparkles } from 'lucide-react';
 
 interface AgentMarketplaceViewProps {
   onLaunchAgent?: (agentId: string) => void;

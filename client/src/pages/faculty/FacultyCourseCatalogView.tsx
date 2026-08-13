@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
-import { BookOpen, Layers, Award, CheckCircle, FileText, Download, X, Edit3, Save } from 'lucide-react';
+import { CheckCircle, X, Edit3, Save } from 'lucide-react';
 
 export const FacultyCourseCatalogView: React.FC = () => {
   const { user } = useAuthStore();
