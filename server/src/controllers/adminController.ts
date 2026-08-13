@@ -29,8 +29,12 @@ export const getAdminStats = async (req: AuthRequest, res: Response) => {
           headName: 'Prof. Alan Turing',
           totalStudents: 480,
           activeCourses: [
-            { code: 'CS-401', name: 'Database Systems & SQL', credits: 4, sem: 4 },
-            { code: 'CS-405', name: 'Advanced Algorithms', credits: 3, sem: 6 },
+            { code: 'CS-401', name: 'Database Systems & SQL', credits: 4, sem: 4, instructor: 'Dr. Sarah Jenkins' },
+            { code: 'CS-403', name: 'Operating Systems Architecture', credits: 4, sem: 4, instructor: 'Dr. Sarah Jenkins' },
+            { code: 'CS-405', name: 'Advanced Algorithms', credits: 3, sem: 6, instructor: 'Dr. Sarah Jenkins' },
+            { code: 'CS-407', name: 'Computer Networks', credits: 4, sem: 5, instructor: 'Dr. Sarah Jenkins' },
+            { code: 'CS-409', name: 'Software Engineering', credits: 3, sem: 5, instructor: 'Dr. Sarah Jenkins' },
+            { code: 'CS-411', name: 'Machine Learning Fundamentals', credits: 4, sem: 6, instructor: 'Dr. Sarah Jenkins' },
           ],
         },
         {
@@ -425,10 +429,36 @@ export const getDepartments = async (req: AuthRequest, res: Response) => {
           activeCourses: [
             { code: 'EC-301', name: 'Digital Signal Processing', credits: 4, sem: 4 },
             { code: 'EC-304', name: 'Microcontrollers & IoT', credits: 3, sem: 4 },
+            { code: 'EC-307', name: 'Embedded Systems Design', credits: 4, sem: 5 },
+            { code: 'EC-309', name: 'Wireless Communication', credits: 3, sem: 5 },
           ],
         },
       ];
       departments = await Department.insertMany(defaultDepartments);
+    } else {
+      // Keep earlier demo databases useful as the catalogue grows, without duplicating courses.
+      const catalogueAdditions: Record<string, { code: string; name: string; credits: number; sem: number; instructor?: string }[]> = {
+        CSE: [
+          { code: 'CS-403', name: 'Operating Systems Architecture', credits: 4, sem: 4, instructor: 'Dr. Sarah Jenkins' },
+          { code: 'CS-407', name: 'Computer Networks', credits: 4, sem: 5, instructor: 'Dr. Sarah Jenkins' },
+          { code: 'CS-409', name: 'Software Engineering', credits: 3, sem: 5, instructor: 'Dr. Sarah Jenkins' },
+          { code: 'CS-411', name: 'Machine Learning Fundamentals', credits: 4, sem: 6, instructor: 'Dr. Sarah Jenkins' },
+        ],
+        'E&TC': [
+          { code: 'EC-307', name: 'Embedded Systems Design', credits: 4, sem: 5 },
+          { code: 'EC-309', name: 'Wireless Communication', credits: 3, sem: 5 },
+        ],
+      };
+      await Promise.all(departments.map(async (department) => {
+        const additions = catalogueAdditions[department.code] || [];
+        const existingCodes = new Set(department.activeCourses.map((course) => course.code.toUpperCase()));
+        const missingCourses = additions.filter((course) => !existingCodes.has(course.code));
+        if (missingCourses.length) {
+          department.activeCourses.push(...missingCourses);
+          await department.save();
+        }
+      }));
+      departments = await Department.find();
     }
 
     return res.status(200).json({ success: true, departments });
@@ -530,6 +560,10 @@ export const addCourseToDepartment = async (req: AuthRequest, res: Response) => 
     const dept = await Department.findById(id);
     if (!dept) {
       return res.status(404).json({ message: 'Department not found.' });
+    }
+
+    if (dept.activeCourses.some((course) => course.code.toUpperCase() === code.toUpperCase())) {
+      return res.status(409).json({ message: `Course code '${code.toUpperCase()}' already exists in this department.` });
     }
 
     dept.activeCourses.push({

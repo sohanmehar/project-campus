@@ -10,6 +10,9 @@ export interface IDepartment extends Document {
     name: string;
     credits: number;
     sem: number;
+    instructor?: string;
+    units?: string[];
+    books?: string;
   }[];
   createdAt: Date;
   updatedAt: Date;
@@ -27,6 +30,9 @@ const DepartmentSchema: Schema = new Schema(
         name: { type: String, required: true },
         credits: { type: Number, default: 4 },
         sem: { type: Number, default: 4 },
+        instructor: { type: String, default: '' },
+        units: [{ type: String }],
+        books: { type: String, default: '' },
       },
     ],
   },

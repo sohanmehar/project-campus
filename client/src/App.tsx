@@ -139,6 +139,10 @@ export default function App() {
                       user?.role === 'faculty' ? <FacultyGradeAssignmentsView /> : <AssignmentsView />
                     }
                   />
+                  <Route
+                    path="/notices"
+                    element={<FacultyNoticesView />}
+                  />
                   <Route path="/placements" element={user?.role === 'admin' ? <AdminPlacementsView /> : <PlacementsView />} />
                   <Route path="/events" element={<EventsView />} />
                   <Route path="/complaints" element={<ComplaintsView />} />
@@ -181,14 +185,6 @@ export default function App() {
                     element={
                       <RoleGuard allowedRoles={['faculty', 'admin']}>
                         <FacultyAttendanceView />
-                      </RoleGuard>
-                    }
-                  />
-                  <Route
-                    path="/notices"
-                    element={
-                      <RoleGuard allowedRoles={['faculty', 'admin']}>
-                        <FacultyNoticesView />
                       </RoleGuard>
                     }
                   />

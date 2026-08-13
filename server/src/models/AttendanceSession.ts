@@ -7,6 +7,7 @@ export interface IAttendanceRecord {
 
 export interface IAttendanceSession extends Document {
   courseId?: mongoose.Types.ObjectId;
+  courseCode?: string;
   facultyId: mongoose.Types.ObjectId;
   facultyName: string;
   subject: string;
@@ -24,6 +25,7 @@ const AttendanceRecordSchema = new Schema({
 const AttendanceSessionSchema: Schema = new Schema(
   {
     courseId: { type: Schema.Types.ObjectId, ref: 'Course', required: false }, // Made optional
+    courseCode: { type: String, trim: true, uppercase: true },
     facultyId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     facultyName: { type: String, required: true },
     subject: { type: String, required: true },

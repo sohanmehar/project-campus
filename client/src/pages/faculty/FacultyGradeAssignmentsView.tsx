@@ -34,12 +34,17 @@ export const FacultyGradeAssignmentsView: React.FC = () => {
     fetchFacultyAssignmentsData();
   }, []);
 
-  const handleCreateAssignment = async (e: React.FormEvent) => {
+const handleCreateAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAssignment.title || !newAssignment.deadline) return;
+    if (!newAssignment.title) return;
 
     try {
-      await axios.post('/faculty/assignments', newAssignment);
+      const payload = {
+        ...newAssignment,
+        totalMarks: Number(newAssignment.totalMarks) || 100,
+      };
+
+      await axios.post('/faculty/assignments', payload);
       addToast('success', 'Assignment Published', `'${newAssignment.title}' sent to student portal.`);
       setIsCreateModalOpen(false);
       setNewAssignment({
@@ -51,7 +56,9 @@ export const FacultyGradeAssignmentsView: React.FC = () => {
       });
       fetchFacultyAssignmentsData();
     } catch (err: any) {
-      addToast('error', 'Error', err.response?.data?.message || 'Could not publish assignment.');
+      console.error('Error creating assignment:', err.response?.data || err);
+      const serverError = err.response?.data?.message || err.response?.data?.error || 'Could not publish assignment.';
+      addToast('error', 'Error', serverError);
     }
   };
 
@@ -253,8 +260,9 @@ export const FacultyGradeAssignmentsView: React.FC = () => {
                   type="date"
                   required
                   value={newAssignment.deadline}
+                  onClick={(e) => e.currentTarget.showPicker && e.currentTarget.showPicker()}
                   onChange={(e) => setNewAssignment({ ...newAssignment, deadline: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 [color-scheme:dark]"
                 />
               </div>
 

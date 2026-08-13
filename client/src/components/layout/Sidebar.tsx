@@ -27,6 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab }) =
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'academics', label: 'Academics & Attendance', icon: BookOpen },
     { id: 'assignments', label: 'Assignments', icon: FileCheck },
+    { id: 'notices', label: 'Notices & Materials', icon: FileText },
     { id: 'placements', label: 'Placement Drives', icon: Briefcase },
     { id: 'events', label: 'Campus Events', icon: Calendar },
     { id: 'complaints', label: 'Grievance Portal', icon: AlertCircle },

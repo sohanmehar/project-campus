@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
 import { Bell, Plus, ExternalLink, Calendar, X, Search, Filter } from 'lucide-react';
 
 export const FacultyNoticesView: React.FC = () => {
+  const { user } = useAuthStore();
+  const canPublish = user?.role === 'faculty' || user?.role === 'admin';
   const [notices, setNotices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'announcement' | 'study_material'>('all');
@@ -117,13 +120,15 @@ export const FacultyNoticesView: React.FC = () => {
           <span className="micro-label text-blue-400">Department Communications</span>
           <h1 className="text-2xl font-bold text-white tracking-tight mt-0.5">Notices & Study Materials</h1>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition shadow-lg shadow-blue-600/20"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Publish Notice / Material</span>
-        </button>
+        {canPublish && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition shadow-lg shadow-blue-600/20"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Publish Notice / Material</span>
+          </button>
+        )}
       </div>
 
       {/* Filter & Search Bar */}

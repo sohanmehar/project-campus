@@ -61,7 +61,7 @@ export const FacultyAttendanceView: React.FC = () => {
     const fetchExistingSession = async () => {
       try {
         const res = await axios.get('/faculty/attendance/session', {
-          params: { subject: selectedSubject, date: lectureDate },
+          params: { subject: selectedSubject, date: lectureDate, slot: timeSlot },
         });
 
         if (res.data.session && res.data.session.records && res.data.session.records.length > 0) {
@@ -93,7 +93,7 @@ export const FacultyAttendanceView: React.FC = () => {
     };
 
     fetchExistingSession();
-  }, [selectedSubject, lectureDate, students]);
+  }, [selectedSubject, lectureDate, timeSlot, students]);
 
   const handleToggleStatus = (studentId: string) => {
     setAttendanceRecords((prev) => {
@@ -121,6 +121,7 @@ export const FacultyAttendanceView: React.FC = () => {
 
       await axios.post('/faculty/attendance', {
         subject: selectedSubject,
+        courseCode: courses.find((course) => course.name === selectedSubject)?.code,
         slot: timeSlot,
         date: lectureDate,
         records: recordsArray,

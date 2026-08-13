@@ -16,7 +16,7 @@ export const getFacultyDashboard = async (req: AuthRequest, res: Response) => {
     const facultyId = req.user?.id;
     const facultyUser = await User.findById(facultyId);
 
-    const activeAssignments = await Assignment.countDocuments({ createdBy: facultyId });
+    const activeAssignments = await Assignment.countDocuments({ facultyId });
     const pendingSubmissions = await Submission.countDocuments({ status: 'submitted' });
     const totalAttendanceSessions = await AttendanceSession.countDocuments({ facultyId });
     const totalNotices = await Notice.countDocuments({ postedBy: facultyId });
@@ -53,35 +53,51 @@ export const markAttendanceSession = async (req: AuthRequest, res: Response) => 
   try {
     const facultyId = req.user?.id;
     const facultyUser = await User.findById(facultyId);
-    const { subject, slot, date, records, courseId } = req.body;
+    const { subject, slot, date, records, courseId, courseCode } = req.body;
 
     if (!subject || !records || !Array.isArray(records)) {
       return res.status(400).json({ message: 'Subject and student attendance records are required.' });
     }
 
-    const formattedRecords = records.map((r: any) => ({
-      studentId: mongoose.Types.ObjectId.isValid(r.studentId)
-        ? new mongoose.Types.ObjectId(r.studentId)
-        : new mongoose.Types.ObjectId(),
-      status: r.status || 'present',
-    }));
+    const invalidRecord = records.find((r: any) => !mongoose.Types.ObjectId.isValid(r?.studentId));
+    if (invalidRecord) {
+      return res.status(400).json({ message: 'Every attendance record must include a valid student ID.' });
+    }
 
-    const session = new AttendanceSession({
+    const formattedRecords = records.map((r: any) => ({
+      studentId: new mongoose.Types.ObjectId(r.studentId),
+      status: ['present', 'absent', 'late'].includes(r.status) ? r.status : 'present',
+    }));
+    const sessionDate = date ? new Date(date) : new Date();
+    if (Number.isNaN(sessionDate.getTime())) {
+      return res.status(400).json({ message: 'A valid lecture date is required.' });
+    }
+    sessionDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(sessionDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const sessionData = {
       courseId: courseId && mongoose.Types.ObjectId.isValid(courseId)
-        ? new mongoose.Types.ObjectId(courseId)
-        : new mongoose.Types.ObjectId(),
+        ? new mongoose.Types.ObjectId(courseId) : undefined,
+      courseCode: courseCode?.trim()?.toUpperCase(),
       facultyId: facultyId && mongoose.Types.ObjectId.isValid(facultyId)
         ? new mongoose.Types.ObjectId(facultyId)
-        : new mongoose.Types.ObjectId(),
+        : undefined,
       facultyName: facultyUser?.name || 'Dr. Sarah Jenkins',
       subject,
       department: facultyUser?.department || 'Computer Science',
       slot: slot || '10:00 AM - 11:00 AM',
-      date: date ? new Date(date) : new Date(),
+      date: sessionDate,
       records: formattedRecords,
-    });
+    };
 
-    await session.save();
+    if (!sessionData.facultyId) return res.status(401).json({ message: 'Unauthorized faculty access.' });
+
+    const session = await AttendanceSession.findOneAndUpdate(
+      { facultyId: sessionData.facultyId, subject: subject.trim(), slot: sessionData.slot, date: { $gte: sessionDate, $lt: nextDay } },
+      { $set: sessionData },
+      { new: true, upsert: true, runValidators: true }
+    );
 
     return res.status(201).json({
       success: true,
@@ -98,15 +114,23 @@ export const markAttendanceSession = async (req: AuthRequest, res: Response) => 
 // @access  Private (Faculty)
 export const getAttendanceSession = async (req: AuthRequest, res: Response) => {
   try {
-    const { subject } = req.query;
+    const { subject, date, slot } = req.query;
 
     if (!subject) {
       return res.status(400).json({ message: 'Subject parameter is required.' });
     }
 
-    const existingSession = await AttendanceSession.findOne({
-      subject: subject as string,
-    }).sort({ createdAt: -1 });
+    const query: any = { facultyId: req.user?.id, subject: subject as string };
+    if (slot) query.slot = slot as string;
+    if (date) {
+      const sessionDate = new Date(date as string);
+      if (Number.isNaN(sessionDate.getTime())) return res.status(400).json({ message: 'Invalid date parameter.' });
+      sessionDate.setHours(0, 0, 0, 0);
+      const nextDay = new Date(sessionDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      query.date = { $gte: sessionDate, $lt: nextDay };
+    }
+    const existingSession = await AttendanceSession.findOne(query).sort({ createdAt: -1 });
 
     if (!existingSession) {
       return res.status(200).json({ success: true, session: null });
@@ -143,24 +167,55 @@ export const getStudentsForAttendance = async (req: AuthRequest, res: Response) 
 // @access  Private (Faculty)
 export const createAssignment = async (req: AuthRequest, res: Response) => {
   try {
-    const facultyId = req.user?.id;
-    const facultyUser = await User.findById(facultyId);
-    const { title, description, subject, deadline, totalMarks, attachmentUrl } = req.body;
+    const { title, description, subject, courseName, courseCode, deadline, totalMarks, priority } = req.body;
 
-    if (!title || !subject || !deadline) {
-      return res.status(400).json({ message: 'Title, subject, and deadline are required.' });
+    if (!title || !title.trim()) {
+      return res.status(400).json({ message: 'Assignment title is required.' });
     }
 
+    const facultyId = req.user?.id;
+    if (!facultyId || !mongoose.Types.ObjectId.isValid(facultyId)) {
+      return res.status(401).json({ message: 'Unauthorized faculty access.' });
+    }
+
+    // 2. Parse Date safely
+    let parsedDeadline: Date;
+    if (deadline) {
+      if (typeof deadline === 'string' && deadline.includes('-')) {
+        const parts = deadline.split('-');
+        if (parts[0].length === 2 && parts[2].length === 4) {
+          // Format DD-MM-YYYY -> YYYY-MM-DD
+          parsedDeadline = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        } else {
+          parsedDeadline = new Date(deadline);
+        }
+      } else {
+        parsedDeadline = new Date(deadline);
+      }
+    } else {
+      parsedDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    }
+
+    if (isNaN(parsedDeadline.getTime())) {
+      parsedDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    }
+
+    const resolvedCourseName = String(subject || courseName || 'Database Systems & SQL').trim();
+    const marks = Number(totalMarks);
+    if (!Number.isFinite(marks) || marks <= 0) {
+      return res.status(400).json({ message: 'Total marks must be a positive number.' });
+    }
+
+    // 3. Create Assignment with guaranteed facultyId
     const assignment = new Assignment({
-      title,
-      description,
-      subject,
-      department: facultyUser?.department || 'Computer Science',
-      deadline: new Date(deadline),
-      totalMarks: Number(totalMarks) || 100,
-      attachmentUrl: attachmentUrl || '',
-      createdBy: facultyId,
-      facultyName: facultyUser?.name || 'Faculty Member',
+      title: title.trim(),
+      description: typeof description === 'string' && description.trim() ? description.trim() : 'Assignment problem statement.',
+      courseName: resolvedCourseName,
+      courseCode: courseCode || 'CS-401',
+      facultyId: new mongoose.Types.ObjectId(facultyId),
+      deadline: parsedDeadline,
+      totalMarks: marks,
+      priority: priority || 'medium',
     });
 
     await assignment.save();
@@ -171,7 +226,11 @@ export const createAssignment = async (req: AuthRequest, res: Response) => {
       assignment,
     });
   } catch (error: any) {
-    return res.status(500).json({ message: 'Error creating assignment', error: error.message });
+    console.error('Error creating assignment in MongoDB:', error);
+    return res.status(400).json({
+      message: 'Validation Error',
+      error: error.message || 'Mongoose schema validation failed.'
+    });
   }
 };
 
@@ -330,7 +389,10 @@ export const createNotice = async (req: AuthRequest, res: Response) => {
 // @access  Private
 export const getNotices = async (req: AuthRequest, res: Response) => {
   try {
-    const notices = await Notice.find().sort({ createdAt: -1 });
+    const user = await User.findById(req.user?.id).select('role department');
+    if (!user) return res.status(401).json({ message: 'Unauthorized access.' });
+    const filter = user.role === 'admin' ? {} : { department: user.department };
+    const notices = await Notice.find(filter).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, notices });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error fetching notices', error: error.message });
