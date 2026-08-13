@@ -26,7 +26,7 @@ router.post('/notices', requireRole(['faculty', 'admin']), createNotice);
 router.get('/notices', getNotices);
 router.get('/attendance/session', requireRole(['faculty', 'admin']), getAttendanceSession);
 router.put('/courses/:code/syllabus', requireRole(['faculty', 'admin']), updateCourseSyllabus);
-router.patch('/submissions/:id/grade', requireRole(['faculty', 'admin']), gradeSubmission);
-router.put('/submissions/:id/grade', requireRole(['faculty', 'admin']), gradeSubmission);
+router.put('/submissions/:id/grade', protect, gradeSubmission);
+router.patch('/submissions/:id/grade', protect, gradeSubmission);
 
 export default router;

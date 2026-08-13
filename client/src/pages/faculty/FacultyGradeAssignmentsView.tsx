@@ -64,7 +64,7 @@ export const FacultyGradeAssignmentsView: React.FC = () => {
       const newMarks = Number(gradingForm.marksObtained);
       const newFeedback = gradingForm.feedback;
 
-      await axios.patch(`/faculty/submissions/${targetId}/grade`, {
+      await axios.put(`/faculty/submissions/${targetId}/grade`, {
         marksObtained: newMarks,
         feedback: newFeedback,
       });
