@@ -87,7 +87,11 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.classList.add('dark');
-    checkAuth();
+    
+    // Only check server session if we don't already have an active authenticated user in state
+    if (!isAuthenticated || !user) {
+      checkAuth();
+    }
   }, []);
 
   const handleLaunchAgent = (agentId: string) => {
