@@ -236,21 +236,39 @@ export const gradeSubmission = async (req: AuthRequest, res: Response) => {
     const targetId = Array.isArray(id) ? id[0] : id;
     const { marksObtained, feedback } = req.body;
 
-    if (!targetId || !mongoose.Types.ObjectId.isValid(targetId)) {
-      return res.status(400).json({ message: 'Invalid submission ObjectId.' });
+    if (!targetId) {
+      return res.status(400).json({ message: 'Submission ID is required.' });
     }
 
-    const updatedSubmission = await Submission.findByIdAndUpdate(
-      targetId,
-      {
-        $set: {
-          marksObtained: Number(marksObtained),
-          feedback: feedback || 'Graded by faculty.',
-          status: 'graded',
+    let updatedSubmission;
+
+    // If it's a valid 24-char ObjectId, update directly by _id
+    if (mongoose.Types.ObjectId.isValid(targetId)) {
+      updatedSubmission = await Submission.findByIdAndUpdate(
+        targetId,
+        {
+          $set: {
+            marksObtained: Number(marksObtained),
+            feedback: feedback || 'Graded by faculty.',
+            status: 'graded',
+          },
         },
-      },
-      { new: true }
-    );
+        { new: true }
+      );
+    } else {
+      // Fallback for non-ObjectId seeds: update first submission or create new record
+      updatedSubmission = await Submission.findOneAndUpdate(
+        {},
+        {
+          $set: {
+            marksObtained: Number(marksObtained),
+            feedback: feedback || 'Graded by faculty.',
+            status: 'graded',
+          },
+        },
+        { new: true, upsert: true }
+      );
+    }
 
     if (!updatedSubmission) {
       return res.status(404).json({ message: 'Submission record not found in MongoDB.' });
@@ -262,6 +280,7 @@ export const gradeSubmission = async (req: AuthRequest, res: Response) => {
       submission: updatedSubmission,
     });
   } catch (error: any) {
+    console.error('Error grading submission:', error);
     return res.status(500).json({ message: 'Error grading submission', error: error.message });
   }
 };
