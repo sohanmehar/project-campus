@@ -19,31 +19,32 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB Atlas
 connectDB();
 
-// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Explicit origins whitelist
 const allowedOrigins = [
   'https://campus-grid-phi-nine.vercel.app',
   'http://localhost:5173',
+  'http://localhost:3000',
   process.env.CLIENT_URL,
 ].filter(Boolean) as string[];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps/curl) or from whitelisted domains
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(null, true); // Fallback so valid production calls pass
+        callback(null, true); // Allow during testing
       }
     },
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   })
 );
 
@@ -59,7 +60,6 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/faculty', facultyRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 
-// Health Check Route
 app.get('/api/v1/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'healthy',
