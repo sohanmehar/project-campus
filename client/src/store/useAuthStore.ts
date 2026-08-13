@@ -1,12 +1,10 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-// Ensure clean string URL assignment & sanitize env variables
-const rawApiUrl = import.meta.env.VITE_API_BASE_URL || '';
-const cleanApiUrl = rawApiUrl.replace(/[\[\]"']/g, '').trim();
-
-const BASE_URL = cleanApiUrl.startsWith('http')
-  ? cleanApiUrl
+// Ensure clean string URL assignment
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = (rawApiUrl && rawApiUrl !== 'undefined' && rawApiUrl.startsWith('http'))
+  ? rawApiUrl
   : (import.meta.env.MODE === 'production'
       ? 'https://campusgpt-backend-oscx.onrender.com/api/v1'
       : 'http://localhost:5000/api/v1');
@@ -15,9 +13,9 @@ const BASE_URL = cleanApiUrl.startsWith('http')
 axios.defaults.baseURL = BASE_URL.replace(/\/+$/, ''); // removes trailing slashes if any
 axios.defaults.withCredentials = true;
 
-// Attach Bearer token from sessionStorage (isolated per tab) to all outgoing requests
+// Attach Bearer token from localStorage to all outgoing requests
 axios.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('campusgpt_token');
+  const token = localStorage.getItem('campusgpt_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -63,7 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = response.data?.token;
 
       if (token) {
-        sessionStorage.setItem('campusgpt_token', token);
+        localStorage.setItem('campusgpt_token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
@@ -95,7 +93,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = response.data?.token;
 
       if (token) {
-        sessionStorage.setItem('campusgpt_token', token);
+        localStorage.setItem('campusgpt_token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
@@ -125,7 +123,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err) {
       console.error('Logout error', err);
     } finally {
-      sessionStorage.removeItem('campusgpt_token');
+      localStorage.removeItem('campusgpt_token');
       delete axios.defaults.headers.common['Authorization'];
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
     }
@@ -148,11 +146,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           error: null,
         });
       } else {
-        sessionStorage.removeItem('campusgpt_token');
+        localStorage.removeItem('campusgpt_token');
         set({ user: null, isAuthenticated: false, isLoading: false, error: null });
       }
     } catch (err) {
-      sessionStorage.removeItem('campusgpt_token');
+      localStorage.removeItem('campusgpt_token');
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
     }
   },
