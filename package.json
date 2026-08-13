@@ -1,0 +1,27 @@
+{
+  "name": "campusgpt-root",
+  "version": "1.0.0",
+  "description": "CampusGPT - Intelligent Campus Operating System",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.4",
+    "concurrently": "^8.2.2",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^3.4.19"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "axios": "^1.19.0",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "framer-motion": "^13.1.0",
+    "lucide-react": "^1.31.0",
+    "recharts": "^3.10.1",
+    "tailwind-merge": "^3.6.0",
+    "zustand": "^5.0.14"
+  }
+}
