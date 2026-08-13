@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-// Dynamically select API base URL
 axios.defaults.baseURL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.MODE === 'production'
@@ -53,7 +52,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post('/auth/login', credentials);
+      // Notice trailing slash /auth/login/ to avoid 308 redirect -> 405 error
+      const response = await axios.post('/auth/login/', credentials);
       const user = response.data?.user;
       const token = response.data?.token;
 
@@ -85,12 +85,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signup: async (userData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post('/auth/signup', userData);
+      const response = await axios.post('/auth/signup/', userData);
       const user = response.data?.user;
       const token = response.data?.token;
 
       if (token) {
         localStorage.setItem('campusgpt_token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
       if (user) {
@@ -115,11 +116,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     try {
-      await axios.post('/auth/logout');
+      await axios.post('/auth/logout/');
     } catch (err) {
       console.error('Logout error', err);
     } finally {
       localStorage.removeItem('campusgpt_token');
+      delete axios.defaults.headers.common['Authorization'];
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
     }
   },
@@ -132,7 +134,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const response = await axios.get('/auth/me');
+      const response = await axios.get('/auth/me/');
       if (response.data?.user) {
         set({
           user: response.data.user,
