@@ -1,12 +1,16 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-axios.defaults.baseURL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.MODE === 'production'
-    ? 'https://campusgpt-backend-oscx.onrender.com/api/v1'
-    : 'http://localhost:5000/api/v1');
+// Ensure clean string URL assignment
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = (rawApiUrl && rawApiUrl !== 'undefined' && rawApiUrl.startsWith('http'))
+  ? rawApiUrl
+  : (import.meta.env.MODE === 'production'
+      ? 'https://campusgpt-backend-oscx.onrender.com/api/v1'
+      : 'http://localhost:5000/api/v1');
 
+// Set base URL explicitly
+axios.defaults.baseURL = BASE_URL.replace(/\/+$/, ''); // removes trailing slashes if any
 axios.defaults.withCredentials = true;
 
 // Attach Bearer token from localStorage to all outgoing requests
@@ -52,8 +56,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
-      // Notice trailing slash /auth/login/ to avoid 308 redirect -> 405 error
-      const response = await axios.post('/auth/login/', credentials);
+      const response = await axios.post('/auth/login', credentials);
       const user = response.data?.user;
       const token = response.data?.token;
 
@@ -85,7 +88,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signup: async (userData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post('/auth/signup/', userData);
+      const response = await axios.post('/auth/signup', userData);
       const user = response.data?.user;
       const token = response.data?.token;
 
@@ -116,7 +119,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     try {
-      await axios.post('/auth/logout/');
+      await axios.post('/auth/logout');
     } catch (err) {
       console.error('Logout error', err);
     } finally {
@@ -134,7 +137,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const response = await axios.get('/auth/me/');
+      const response = await axios.get('/auth/me');
       if (response.data?.user) {
         set({
           user: response.data.user,
