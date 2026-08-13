@@ -13,7 +13,6 @@ import complaintRoutes from './routes/complaintRoutes';
 import adminRoutes from './routes/adminRoutes';
 import facultyRoutes from './routes/facultyRoutes';
 import notificationRoutes from './routes/notificationRoutes';
-import { a } from 'framer-motion/client';
 
 dotenv.config();
 
