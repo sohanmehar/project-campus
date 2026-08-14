@@ -5,6 +5,7 @@ export type UserRole = 'student' | 'faculty' | 'coordinator' | 'admin';
 export interface IUser extends Document {
   name: string;
   email: string;
+  phone?: string;
   passwordHash: string;
   role: UserRole;
   department: string;
@@ -12,6 +13,7 @@ export interface IUser extends Document {
   isVerified: boolean;
   studentDetails?: {
     rollNumber: string;
+    phone?: string;
     semester: number;
     cgpa: number;
     skills: string[];
@@ -42,10 +44,12 @@ const UserSchema: Schema = new Schema(
       index: true,
     },
     department: { type: String, required: true, default: 'Computer Science' },
+    phone: { type: String, default: '' },
     avatarUrl: { type: String, default: '' },
     isVerified: { type: Boolean, default: true }, // Simplified email verification for hackathon demo
     studentDetails: {
       rollNumber: { type: String, sparse: true },
+      phone: { type: String, default: '' },
       semester: { type: Number, default: 1 },
       cgpa: { type: Number, default: 0.0 },
       skills: [{ type: String }],

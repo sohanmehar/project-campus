@@ -57,7 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post('/auth/login', credentials);
-      const user = response.data?.user;
+      const rawUser = response.data?.user;
       const token = response.data?.token;
 
       if (token) {
@@ -65,7 +65,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
-      if (user) {
+      if (rawUser) {
+        const user = {
+          ...rawUser,
+          id: (rawUser.id || rawUser._id || '').toString(),
+        };
         set({
           user,
           isAuthenticated: true,
@@ -89,7 +93,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post('/auth/signup', userData);
-      const user = response.data?.user;
+      const rawUser = response.data?.user;
       const token = response.data?.token;
 
       if (token) {
@@ -97,7 +101,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
-      if (user) {
+      if (rawUser) {
+        const user = {
+          ...rawUser,
+          id: (rawUser.id || rawUser._id || '').toString(),
+        };
         set({
           user,
           isAuthenticated: true,
@@ -139,8 +147,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const response = await axios.get('/auth/me');
       if (response.data?.user) {
+        const rawUser = response.data.user;
+        const user = {
+          ...rawUser,
+          id: (rawUser.id || rawUser._id || '').toString(),
+        };
         set({
-          user: response.data.user,
+          user,
           isAuthenticated: true,
           isLoading: false,
           error: null,

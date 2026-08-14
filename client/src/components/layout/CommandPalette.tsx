@@ -76,7 +76,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                 className="w-full flex items-center px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
               >
                 <Calendar className="w-4 h-4 mr-3 text-amber-400" />
-                <span>Campus Events & Clubs</span>
+                <span>Campus Events & Passes</span>
+              </button>
+
+              <button
+                onClick={() => handleSelect('/clubs')}
+                className="w-full flex items-center px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
+              >
+                <BookOpen className="w-4 h-4 mr-3 text-purple-400" />
+                <span>Clubs & Student Societies</span>
               </button>
 
               <button

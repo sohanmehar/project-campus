@@ -76,7 +76,7 @@ export const getAdminStats = async (req: AuthRequest, res: Response) => {
       ]);
     }
 
-    // 3. Query All Collection Counts
+    // 3. Query All Collection Counts
     const [
       totalStudents,
       totalFaculty,
@@ -94,7 +94,6 @@ export const getAdminStats = async (req: AuthRequest, res: Response) => {
       Event.countDocuments(),
       Placement.countDocuments(),
       Application.countDocuments(),
-      // cast filter to any to satisfy TypeScript overloads for countDocuments
       Application.countDocuments({ status: { $in: ['Selected', 'Accepted', 'Placed'] } } as any),
       Submission.countDocuments(),
       Assignment.countDocuments(),
@@ -120,7 +119,7 @@ export const getAdminStats = async (req: AuthRequest, res: Response) => {
     if (attendanceAgg.length > 0 && attendanceAgg[0].total > 0) {
       avgAttendance = Number(((attendanceAgg[0].present / attendanceAgg[0].total) * 100).toFixed(1));
     } else {
-      avgAttendance = 83.3; // Computed from 5 present / 6 total seeded records
+      avgAttendance = 83.3;
     }
 
     // 5. Calculate Placement Rate directly from DB Applications
@@ -128,7 +127,7 @@ export const getAdminStats = async (req: AuthRequest, res: Response) => {
     if (totalApplications > 0) {
       placementRate = Number(((placedApplications / totalApplications) * 100).toFixed(1));
     } else if (totalPlacements > 0) {
-      placementRate = 88.5; // Calculated ratio based on active drives
+      placementRate = 88.5;
     }
 
     // 6. Build Real Monthly Trends Data for Chart
@@ -141,11 +140,10 @@ export const getAdminStats = async (req: AuthRequest, res: Response) => {
     ];
 
     // 7. Generate Real Audit Logs directly from MongoDB collections
-    const [recentPlacements, recentFaculty, recentEvents, recentSubmissions] = await Promise.all([
+    const [recentPlacements, recentFaculty, recentEvents] = await Promise.all([
       Placement.find().sort({ createdAt: -1 }).limit(2),
       Faculty.find().sort({ createdAt: -1 }).limit(2),
       Event.find().sort({ createdAt: -1 }).limit(2),
-      Submission.find().sort({ createdAt: -1 }).limit(2),
     ]);
 
     const auditLogs: any[] = [];
@@ -177,6 +175,39 @@ export const getAdminStats = async (req: AuthRequest, res: Response) => {
       });
     });
 
+    // 8. Calculate Real Department Student Distribution directly from MongoDB
+    const allDepartments = await Department.find().sort({ name: 1 });
+    const studentDeptAgg = await User.aggregate([
+      { $match: { role: 'student' } },
+      { $group: { _id: '$department', count: { $sum: 1 } } },
+    ]);
+
+    const deptDistribution = allDepartments.map((dept) => {
+      const deptCode = dept.code || dept.name;
+      const deptNameLower = dept.name.toLowerCase().trim();
+      const deptCodeLower = deptCode.toLowerCase().trim();
+
+      const matched = studentDeptAgg.filter((agg) => {
+        if (!agg._id) return false;
+        const aggLower = String(agg._id).toLowerCase().trim();
+        return (
+          aggLower === deptNameLower ||
+          aggLower === deptCodeLower ||
+          deptNameLower.includes(aggLower) ||
+          aggLower.includes(deptNameLower) ||
+          (dept.code && aggLower.includes(deptCodeLower))
+        );
+      });
+
+      const studentCount = matched.reduce((acc, curr) => acc + (curr.count || 0), 0);
+
+      return {
+        name: dept.code || dept.name,
+        fullName: dept.name,
+        students: studentCount,
+      };
+    });
+
     return res.status(200).json({
       success: true,
       stats: {
@@ -188,6 +219,7 @@ export const getAdminStats = async (req: AuthRequest, res: Response) => {
         avgAttendance,
         placementRate,
         monthlyTrends,
+        deptDistribution,
         auditLogs: auditLogs.length > 0 ? auditLogs : [
           {
             id: 'log-1',
@@ -437,22 +469,256 @@ export const getDepartments = async (req: AuthRequest, res: Response) => {
       departments = await Department.insertMany(defaultDepartments);
     } else {
       // Keep earlier demo databases useful as the catalogue grows, without duplicating courses.
-      const catalogueAdditions: Record<string, { code: string; name: string; credits: number; sem: number; instructor?: string }[]> = {
+      const catalogueAdditions: Record<string, { code: string; name: string; credits: number; sem: number; instructor?: string; units?: string[]; books?: string }[]> = {
         CSE: [
-          { code: 'CS-403', name: 'Operating Systems Architecture', credits: 4, sem: 4, instructor: 'Dr. Sarah Jenkins' },
-          { code: 'CS-407', name: 'Computer Networks', credits: 4, sem: 5, instructor: 'Dr. Sarah Jenkins' },
-          { code: 'CS-409', name: 'Software Engineering', credits: 3, sem: 5, instructor: 'Dr. Sarah Jenkins' },
-          { code: 'CS-411', name: 'Machine Learning Fundamentals', credits: 4, sem: 6, instructor: 'Dr. Sarah Jenkins' },
+          { 
+            code: 'CS-401', 
+            name: 'Database Systems & SQL', 
+            credits: 4, 
+            sem: 4, 
+            instructor: 'Dr. Sarah Jenkins',
+            units: [
+              'Unit 1: ER Modeling, Schema Design & Relational Algebra',
+              'Unit 2: Complex SQL Queries, Joins, Triggers & Views',
+              'Unit 3: Normalization & Functional Dependencies (1NF to BCNF)',
+              'Unit 4: Transaction Concurrency, Locking & ACID Guarantees',
+              'Unit 5: B+ Tree Indexing & Query Cost Optimization'
+            ],
+            books: 'Database System Concepts (7th Edition) - Silberschatz, Korth, Sudarshan'
+          },
+          { 
+            code: 'CS-403', 
+            name: 'Operating Systems Architecture', 
+            credits: 4, 
+            sem: 4, 
+            instructor: 'Dr. Sarah Jenkins',
+            units: [
+              'Unit 1: Processes, Threads & CPU Scheduling Algorithms',
+              'Unit 2: Inter-Process Communication & Synchronization Primitives',
+              'Unit 3: Deadlock Prevention, Avoidance & Recovery',
+              'Unit 4: Memory Management, Paging & Virtual Memory',
+              'Unit 5: File Systems, I/O Subsystems & Disk Scheduling'
+            ],
+            books: 'Operating System Concepts - Silberschatz & Galvin'
+          },
+          { 
+            code: 'CS-405', 
+            name: 'Advanced Algorithms & Complexity', 
+            credits: 4, 
+            sem: 5, 
+            instructor: 'Prof. Alan Turing',
+            units: [
+              'Unit 1: Asymptotic Analysis, Recurrences & Master Theorem',
+              'Unit 2: Dynamic Programming & Greedy Paradigms',
+              'Unit 3: Graph Algorithms (Max-Flow, Min-Cut, Shortest Paths)',
+              'Unit 4: NP-Completeness, Reductions & Approximation',
+              'Unit 5: Randomized Algorithms & Streaming Data Structures'
+            ],
+            books: 'Introduction to Algorithms (CLRS) - Cormen, Leiserson, Rivest, Stein'
+          },
+          { 
+            code: 'CS-407', 
+            name: 'Computer Networks & Protocols', 
+            credits: 4, 
+            sem: 5, 
+            instructor: 'Dr. Sarah Jenkins',
+            units: [
+              'Unit 1: OSI Reference Model & Physical/Data Link Layers',
+              'Unit 2: IP Addressing, Subnetting & Routing (OSPF, BGP)',
+              'Unit 3: Transport Layer (TCP Congestion Control & UDP)',
+              'Unit 4: Application Layer Protocols (HTTP/3, DNS, TLS)',
+              'Unit 5: Network Security, Firewalls & VPN Architectures'
+            ],
+            books: 'Computer Networking: A Top-Down Approach - Kurose & Ross'
+          },
+          { 
+            code: 'CS-409', 
+            name: 'Software Engineering & DevOps', 
+            credits: 3, 
+            sem: 5, 
+            instructor: 'Dr. Sarah Jenkins',
+            units: [
+              'Unit 1: Agile Methodologies, Scrum & Requirements Engineering',
+              'Unit 2: Object-Oriented Design & Microservice Patterns',
+              'Unit 3: Automated Testing (Unit, Integration, E2E) & TDD',
+              'Unit 4: CI/CD Pipelines, Docker Containers & Kubernetes',
+              'Unit 5: Observability, Logging & SRE Principles'
+            ],
+            books: 'Clean Architecture - Robert C. Martin'
+          },
+          { 
+            code: 'CS-411', 
+            name: 'Machine Learning & Pattern Recognition', 
+            credits: 4, 
+            sem: 6, 
+            instructor: 'Dr. Sarah Jenkins',
+            units: [
+              'Unit 1: Supervised Learning: Regression, SVMs & Decision Trees',
+              'Unit 2: Unsupervised Learning: K-Means, PCA & Clustering',
+              'Unit 3: Neural Networks, Backpropagation & Optimization',
+              'Unit 4: Convolutional & Recurrent Neural Architectures',
+              'Unit 5: Model Evaluation, Cross-Validation & Regularization'
+            ],
+            books: 'Pattern Recognition and Machine Learning - Christopher Bishop'
+          },
+          { 
+            code: 'CS-414', 
+            name: 'Cloud Computing & Distributed Systems', 
+            credits: 4, 
+            sem: 6, 
+            instructor: 'Prof. Alan Turing',
+            units: [
+              'Unit 1: Distributed Architectures, RPCs & Message Brokers',
+              'Unit 2: CAP Theorem, PACELC & Distributed Consensus (Raft/Paxos)',
+              'Unit 3: Cloud Infrastructure (IaaS, PaaS, Serverless FaaS)',
+              'Unit 4: Scalable Storage (Dynamo, Bigtable & Object Stores)',
+              'Unit 5: Fault Tolerance, Replication & Disaster Recovery'
+            ],
+            books: 'Designing Data-Intensive Applications - Martin Kleppmann'
+          },
+          { 
+            code: 'CS-418', 
+            name: 'Cybersecurity & Cryptography', 
+            credits: 3, 
+            sem: 7, 
+            instructor: 'Dr. Sarah Jenkins',
+            units: [
+              'Unit 1: Classical Cryptography & Modern Symmetric Ciphers (AES)',
+              'Unit 2: Asymmetric Cryptography (RSA, ECC) & Digital Signatures',
+              'Unit 3: Web Security (OWASP Top 10, XSS, CSRF, SQLi)',
+              'Unit 4: Authentication Protocols (OAuth 2.0, OpenID, JWT)',
+              'Unit 5: Zero-Trust Architecture & Threat Modeling'
+            ],
+            books: 'Cryptography and Network Security - William Stallings'
+          },
+          { 
+            code: 'CS-420', 
+            name: 'Full-Stack Web Development & Modern APIs', 
+            credits: 3, 
+            sem: 4, 
+            instructor: 'Dr. Sarah Jenkins',
+            units: [
+              'Unit 1: Modern JavaScript/TypeScript & Reactive DOM Patterns',
+              'Unit 2: Component-Driven Frontend (React, State Management)',
+              'Unit 3: RESTful & GraphQL API Design with Node.js/Express',
+              'Unit 4: NoSQL Databases (MongoDB) & Caching (Redis)',
+              'Unit 5: WebSockets, Real-Time Sync & Performance Tuning'
+            ],
+            books: 'Full-Stack React, TypeScript and Node - David Choi'
+          },
+          { 
+            code: 'CS-422', 
+            name: 'Natural Language Processing & Generative AI', 
+            credits: 4, 
+            sem: 7, 
+            instructor: 'Prof. Alan Turing',
+            units: [
+              'Unit 1: Text Tokenization, Word2Vec & N-gram Models',
+              'Unit 2: Sequence Models (RNNs, LSTMs, GRUs) & Attention',
+              'Unit 3: Transformer Architecture & Self-Attention Mechanisms',
+              'Unit 4: Pretrained LLMs (BERT, GPT, Gemini) & Prompt Engineering',
+              'Unit 5: Retrieval-Augmented Generation (RAG) & Vector Databases'
+            ],
+            books: 'Speech and Language Processing - Dan Jurafsky & James H. Martin'
+          },
         ],
         'E&TC': [
-          { code: 'EC-307', name: 'Embedded Systems Design', credits: 4, sem: 5 },
-          { code: 'EC-309', name: 'Wireless Communication', credits: 3, sem: 5 },
+          { 
+            code: 'EC-301', 
+            name: 'Digital Signal Processing', 
+            credits: 4, 
+            sem: 4, 
+            instructor: 'Dr. Marcus Vance',
+            units: [
+              'Unit 1: Discrete-Time Signals and Systems (LTI)',
+              'Unit 2: Z-Transform & Frequency Analysis',
+              'Unit 3: Discrete Fourier Transform (DFT) & FFT Algorithms',
+              'Unit 4: IIR & FIR Digital Filter Design',
+              'Unit 5: Multirate Signal Processing & Applications'
+            ],
+            books: 'Digital Signal Processing - Oppenheim & Schafer'
+          },
+          { 
+            code: 'EC-304', 
+            name: 'Microcontrollers & IoT Architecture', 
+            credits: 3, 
+            sem: 4, 
+            instructor: 'Dr. Marcus Vance',
+            units: [
+              'Unit 1: ARM Cortex-M Architecture & Instruction Set',
+              'Unit 2: GPIO, Timers, ADC, UART, SPI & I2C Peripherals',
+              'Unit 3: IoT Sensor Interfacing & Wireless Nodes (ESP32, BLE)',
+              'Unit 4: MQTT, CoAP & HTTP Communication Protocols',
+              'Unit 5: Edge Computing & Low-Power Embedded Optimization'
+            ],
+            books: 'The Definitive Guide to ARM Cortex-M3 and Cortex-M4 - Joseph Yiu'
+          },
+          { 
+            code: 'EC-307', 
+            name: 'Embedded Systems Design', 
+            credits: 4, 
+            sem: 5, 
+            instructor: 'Dr. Marcus Vance',
+            units: [
+              'Unit 1: Embedded Hardware-Software Co-Design',
+              'Unit 2: Real-Time Operating Systems (FreeRTOS) & Task Scheduling',
+              'Unit 3: Memory Architectures & Device Drivers',
+              'Unit 4: Hardware Debugging (JTAG, Logic Analyzers)',
+              'Unit 5: Safety-Critical Embedded System Standards'
+            ],
+            books: 'Embedded Systems Architecture - Tammy Noergaard'
+          },
+          { 
+            code: 'EC-309', 
+            name: 'Wireless Communication & 5G', 
+            credits: 3, 
+            sem: 5, 
+            instructor: 'Dr. Marcus Vance',
+            units: [
+              'Unit 1: Wireless Channel Propagation, Fading & Multipath',
+              'Unit 2: Cellular Concepts, Handoff & Frequency Reuse',
+              'Unit 3: Multiple Access Techniques (OFDMA, MIMO, Beamforming)',
+              'Unit 4: 4G LTE & 5G NR Radio Access Architectures',
+              'Unit 5: Software Defined Radio (SDR) & Satellite Links'
+            ],
+            books: 'Wireless Communications - Andrea Goldsmith'
+          },
+          { 
+            code: 'EC-312', 
+            name: 'VLSI Circuit Design & Verilog HDL', 
+            credits: 4, 
+            sem: 6, 
+            instructor: 'Dr. Marcus Vance',
+            units: [
+              'Unit 1: MOSFET Physics, CMOS Inverter & Dynamic Characteristics',
+              'Unit 2: Combinational & Sequential Logic Design in CMOS',
+              'Unit 3: Verilog HDL Modeling, Simulation & Synthesis',
+              'Unit 4: FPGA Architecture & Place-and-Route Flows',
+              'Unit 5: Low-Power VLSI Design & Testing (BIST, Scan Chains)'
+            ],
+            books: 'CMOS VLSI Design - Weste & Harris'
+          },
+          { 
+            code: 'EC-316', 
+            name: 'Robotics & Autonomous Systems', 
+            credits: 4, 
+            sem: 6, 
+            instructor: 'Dr. Marcus Vance',
+            units: [
+              'Unit 1: Spatial Transformations & Forward/Inverse Kinematics',
+              'Unit 2: Robot Dynamics & Trajectory Planning',
+              'Unit 3: Sensors, LiDAR, Computer Vision & SLAM Algorithms',
+              'Unit 4: Robot Operating System 2 (ROS 2) Architecture',
+              'Unit 5: Autonomous Navigation, Control & Path Planning'
+            ],
+            books: 'Introduction to Robotics: Mechanics and Control - John J. Craig'
+          },
         ],
       };
       await Promise.all(departments.map(async (department) => {
-        const additions = catalogueAdditions[department.code] || [];
+        const additions = catalogueAdditions[department.code] || catalogueAdditions['CSE'] || [];
         const existingCodes = new Set(department.activeCourses.map((course) => course.code.toUpperCase()));
-        const missingCourses = additions.filter((course) => !existingCodes.has(course.code));
+        const missingCourses = additions.filter((course) => !existingCodes.has(course.code.toUpperCase()));
         if (missingCourses.length) {
           department.activeCourses.push(...missingCourses);
           await department.save();

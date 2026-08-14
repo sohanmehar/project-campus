@@ -5,6 +5,7 @@
 :root {
   --bg-primary: #f8fafc;
   --bg-surface: #ffffff;
+  --bg-surface-secondary: #f1f5f9;
   --text-main: #0f172a;
   --text-muted: #64748b;
   --border-subtle: #e2e8f0;
@@ -13,6 +14,7 @@
 .dark {
   --bg-primary: #020617;
   --bg-surface: #0f172a;
+  --bg-surface-secondary: #1e293b;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --border-subtle: #1e293b;
@@ -23,6 +25,7 @@ body {
   color: var(--text-main);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom Stitch UI Utility Classes */
@@ -31,6 +34,7 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .micro-label {
@@ -43,4 +47,187 @@ body {
 
 .dark .micro-label {
   color: #94a3b8;
+}
+
+/* ============================================================
+   LIGHT MODE SMART CSS OVERRIDES
+   Ensures complete, gorgeous light theme across all pages & roles
+   ============================================================ */
+
+.light {
+  color-scheme: light;
+}
+
+.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Cards & Surface Backgrounds */
+.light .bg-slate-950 {
+  background-color: #ffffff !important;
+  color: #0f172a;
+}
+
+.light .bg-slate-900 {
+  background-color: #f8fafc !important;
+  color: #0f172a;
+}
+
+.light .bg-slate-900\/60,
+.light .bg-slate-900\/80,
+.light .bg-slate-900\/40,
+.light .bg-slate-900\/90 {
+  background-color: #f1f5f9 !important;
+}
+
+.light .bg-slate-950\/60,
+.light .bg-slate-950\/80,
+.light .bg-slate-950\/90,
+.light .bg-slate-950\/40 {
+  background-color: rgba(248, 250, 252, 0.85) !important;
+}
+
+/* Borders */
+.light .border-slate-800,
+.light .border-slate-800\/80,
+.light .border-slate-800\/60,
+.light .border-slate-900,
+.light .border-slate-950 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Typography in Light Mode */
+.light .text-white {
+  color: #0f172a !important;
+}
+
+.light .text-slate-100,
+.light .text-slate-200 {
+  color: #1e293b !important;
+}
+
+.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+.light .text-slate-400 {
+  color: #64748b !important;
+}
+
+.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Form Inputs, Selects & Textareas */
+.light input,
+.light select,
+.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light input:focus,
+.light select:focus,
+.light textarea:focus {
+  background-color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15) !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Table Hover & Dividing Lines */
+.light .hover\:bg-slate-800:hover,
+.light .hover\:bg-slate-900:hover,
+.light .hover\:bg-slate-950\/40:hover,
+.light .hover\:bg-slate-950\/80:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.light .divide-slate-800\/60 > * + *,
+.light .divide-slate-800 > * + * {
+  border-color: #e2e8f0 !important;
+}
+
+/* Buttons with Solid Colored Backgrounds (Always keep high contrast white text) */
+.light .bg-blue-600,
+.light .bg-indigo-600,
+.light .bg-purple-600,
+.light .bg-rose-600,
+.light .bg-emerald-600,
+.light .bg-amber-600,
+.light .bg-blue-500,
+.light .bg-indigo-500,
+.light .bg-purple-500,
+.light .bg-rose-500,
+.light .bg-emerald-500 {
+  color: #ffffff !important;
+}
+
+.light .bg-blue-600 .text-white,
+.light .bg-indigo-600 .text-white,
+.light .bg-purple-600 .text-white,
+.light .bg-rose-600 .text-white,
+.light .bg-emerald-600 .text-white {
+  color: #ffffff !important;
+}
+
+/* Badges with light tints */
+.light .bg-blue-500\/10 {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+.light .bg-emerald-500\/10,
+.light .bg-emerald-500\/20 {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+.light .bg-purple-500\/10,
+.light .bg-purple-500\/20 {
+  background-color: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #6b21a8 !important;
+}
+
+.light .bg-amber-500\/10,
+.light .bg-amber-500\/20 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+
+.light .bg-rose-500\/10,
+.light .bg-rose-500\/20 {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #be123c !important;
+}
+
+.light .bg-indigo-500\/10,
+.light .bg-indigo-500\/20 {
+  background-color: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  color: #4338ca !important;
+}
+
+/* Modals & Popovers Backdrop */
+.light .bg-slate-950\/80,
+.light .bg-slate-950\/70 {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+}
+
+.light .bg-slate-900.shadow-2xl,
+.light .stitch-card.shadow-2xl {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
 }

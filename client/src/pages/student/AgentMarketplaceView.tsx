@@ -83,7 +83,7 @@ export const AgentMarketplaceView: React.FC<AgentMarketplaceViewProps> = ({ onLa
                 </span>
                 <button
                   onClick={() => onLaunchAgent && onLaunchAgent(agent.id)}
-                  className="flex items-center text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition hover:translate-x-1"
+                  className="flex items-center text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition hover:translate-x-1 cursor-pointer"
                 >
                   Launch Agent <ArrowRight className="w-3.5 h-3.5 ml-1" />
                 </button>
@@ -91,6 +91,31 @@ export const AgentMarketplaceView: React.FC<AgentMarketplaceViewProps> = ({ onLa
             </div>
           );
         })}
+      </div>
+
+      {/* Future Scope Notice Banner */}
+      <div className="stitch-card p-5 bg-indigo-950/20 border border-indigo-500/20 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3.5">
+          <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                Future Scope
+              </span>
+              <span className="text-xs font-bold text-white">Custom Agent Builder & Multi-Agent Workflows</span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+              Custom agent fine-tuning, multi-agent automated departmental workflows, and external model integrations are scheduled for future release.
+            </p>
+          </div>
+        </div>
+        <div className="shrink-0">
+          <span className="px-3 py-1 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-mono font-bold rounded-lg">
+            Coming Soon in v2.0
+          </span>
+        </div>
       </div>
     </div>
   );

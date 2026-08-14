@@ -3,10 +3,10 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface INotice extends Document {
   title: string;
   content: string;
-  department: string;
+  department?: string;
   subject?: string;
   attachmentUrl?: string;
-  postedBy: mongoose.Types.ObjectId; // Faculty User ID
+  postedBy?: mongoose.Types.ObjectId; // Faculty User ID
   facultyName: string;
   noticeType: 'announcement' | 'study_material';
   createdAt: Date;
@@ -17,11 +17,11 @@ const NoticeSchema: Schema = new Schema(
   {
     title: { type: String, required: true, trim: true },
     content: { type: String, required: true },
-    department: { type: String, required: true, default: 'Computer Science' },
+    department: { type: String, default: 'Computer Science' },
     subject: { type: String, default: 'General' },
     attachmentUrl: { type: String, default: '' },
-    postedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    facultyName: { type: String, required: true },
+    postedBy: { type: Schema.Types.ObjectId, ref: 'User', required: false },
+    facultyName: { type: String, default: 'Faculty' },
     noticeType: { type: String, enum: ['announcement', 'study_material'], default: 'announcement' },
   },
   { timestamps: true }

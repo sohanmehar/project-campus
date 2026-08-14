@@ -13,6 +13,8 @@ import complaintRoutes from './routes/complaintRoutes';
 import adminRoutes from './routes/adminRoutes';
 import facultyRoutes from './routes/facultyRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import clubRoutes from './routes/clubRoutes';
+import coordinatorRoutes from './routes/coordinatorRoutes';
 
 dotenv.config();
 
@@ -59,6 +61,8 @@ app.use('/api/v1/complaints', complaintRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/faculty', facultyRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/clubs', clubRoutes);
+app.use('/api/v1/coordinator', coordinatorRoutes);
 
 app.get('/api/v1/health', (req: Request, res: Response) => {
   res.status(200).json({

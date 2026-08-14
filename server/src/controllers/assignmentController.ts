@@ -15,9 +15,14 @@ export const getAssignments = async (req: AuthRequest, res: Response) => {
 
     // Seed mock assignments into MongoDB if collection is empty so we have valid ObjectIds
     if (assignments.length === 0) {
+      const validFacultyId = (studentId && mongoose.Types.ObjectId.isValid(studentId))
+        ? new mongoose.Types.ObjectId(studentId)
+        : new mongoose.Types.ObjectId('665000000000000000000001');
+
       const defaultAssignments: {
         _id: mongoose.Types.ObjectId;
         title: string;
+        subject: string;
         courseName: string;
         courseCode: string;
         facultyId: mongoose.Types.ObjectId;
@@ -29,9 +34,10 @@ export const getAssignments = async (req: AuthRequest, res: Response) => {
         {
           _id: new mongoose.Types.ObjectId(),
           title: 'Neural Network Mapping & Hyperparameters',
+          subject: 'Cognitive Neuroscience',
           courseName: 'Cognitive Neuroscience',
           courseCode: 'BIO-302',
-          facultyId: new mongoose.Types.ObjectId(studentId),
+          facultyId: validFacultyId,
           deadline: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours left
           totalMarks: 100,
           priority: 'high',
@@ -40,9 +46,10 @@ export const getAssignments = async (req: AuthRequest, res: Response) => {
         {
           _id: new mongoose.Types.ObjectId(),
           title: 'SQL Database Indexing & Optimization',
-          courseName: 'Database Systems',
+          subject: 'Database Systems & SQL',
+          courseName: 'Database Systems & SQL',
           courseCode: 'CS-401',
-          facultyId: new mongoose.Types.ObjectId(studentId),
+          facultyId: validFacultyId,
           deadline: new Date(Date.now() + 48 * 60 * 60 * 1000),
           totalMarks: 50,
           priority: 'medium',
@@ -65,6 +72,7 @@ export const getAssignments = async (req: AuthRequest, res: Response) => {
       return {
         _id: asg._id,
         title: asg.title,
+        subject: asg.subject || asg.courseName,
         courseName: asg.courseName,
         courseCode: asg.courseCode,
         deadline: asg.deadline,

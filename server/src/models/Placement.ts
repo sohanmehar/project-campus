@@ -6,6 +6,7 @@ export interface IPlacement extends Document {
   jobRole: string;
   ctc: number; // in LPA
   location: string;
+  registrationUrl?: string;
   eligibility: {
     minCgpa: number;
     allowedDepartments: string[];
@@ -24,6 +25,7 @@ const PlacementSchema: Schema = new Schema(
     jobRole: { type: String, required: true, trim: true },
     ctc: { type: Number, required: true },
     location: { type: String, default: 'Bangalore / Remote' },
+    registrationUrl: { type: String, default: '' },
     eligibility: {
       minCgpa: { type: Number, default: 7.5 },
       allowedDepartments: [{ type: String }],

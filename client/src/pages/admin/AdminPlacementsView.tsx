@@ -15,6 +15,7 @@ export const AdminPlacementsView: React.FC = () => {
     jobRole: '',
     ctc: '',
     location: 'Bangalore, India',
+    registrationUrl: '',
     minCgpa: '7.5',
     requiredSkills: '',
     description: '',
@@ -23,7 +24,7 @@ export const AdminPlacementsView: React.FC = () => {
   const fetchDrives = async () => {
     try {
       const response = await axios.get('/placements/drives');
-      setDrives(response.data.drives);
+      setDrives(response.data.drives || response.data.placements || []);
     } catch (err) {
       console.error('Error fetching placement drives', err);
     } finally {
@@ -49,6 +50,7 @@ export const AdminPlacementsView: React.FC = () => {
         jobRole: '',
         ctc: '',
         location: 'Bangalore, India',
+        registrationUrl: '',
         minCgpa: '7.5',
         requiredSkills: '',
         description: '',
@@ -90,7 +92,7 @@ export const AdminPlacementsView: React.FC = () => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition shadow-lg shadow-blue-600/20"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition shadow-lg shadow-blue-600/20 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Post New Drive</span>
@@ -126,6 +128,15 @@ export const AdminPlacementsView: React.FC = () => {
                   </span>
                 ))}
               </div>
+
+              {drive.registrationUrl && (
+                <div className="text-[11px] text-blue-400 font-mono flex items-center space-x-1 truncate">
+                  <span>Registration Link:</span>
+                  <a href={drive.registrationUrl} target="_blank" rel="noreferrer" className="underline truncate hover:text-blue-300">
+                    {drive.registrationUrl}
+                  </a>
+                </div>
+              )}
             </div>
 
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
@@ -138,7 +149,7 @@ export const AdminPlacementsView: React.FC = () => {
 
               <button
                 onClick={() => handleDeleteDrive(drive._id, drive.companyName)}
-                className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-medium rounded-lg flex items-center space-x-1 transition"
+                className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-medium rounded-lg flex items-center space-x-1 transition cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete</span>
@@ -151,10 +162,10 @@ export const AdminPlacementsView: React.FC = () => {
       {/* Post Drive Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="stitch-card p-6 bg-slate-900 border-slate-800 max-w-lg w-full space-y-4 relative">
+          <div className="stitch-card p-6 bg-slate-900 border-slate-800 max-w-lg w-full space-y-4 relative shadow-2xl rounded-2xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-white">Post New Recruitment Drive</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -162,7 +173,7 @@ export const AdminPlacementsView: React.FC = () => {
             <form onSubmit={handleCreateDrive} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="micro-label text-slate-400">Company Name</label>
+                  <label className="micro-label text-slate-400">Company Name *</label>
                   <input
                     type="text"
                     required
@@ -174,7 +185,7 @@ export const AdminPlacementsView: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="micro-label text-slate-400">Job Role</label>
+                  <label className="micro-label text-slate-400">Job Role *</label>
                   <input
                     type="text"
                     required
@@ -188,7 +199,7 @@ export const AdminPlacementsView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="micro-label text-slate-400">CTC Package (LPA)</label>
+                  <label className="micro-label text-slate-400">CTC Package (LPA) *</label>
                   <input
                     type="number"
                     step="0.5"
@@ -196,7 +207,7 @@ export const AdminPlacementsView: React.FC = () => {
                     placeholder="e.g. 24"
                     value={formData.ctc}
                     onChange={(e) => setFormData({ ...formData, ctc: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
                   />
                 </div>
 
@@ -207,9 +218,20 @@ export const AdminPlacementsView: React.FC = () => {
                     step="0.1"
                     value={formData.minCgpa}
                     onChange={(e) => setFormData({ ...formData, minCgpa: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="micro-label text-slate-400">Registration / Application URL (Optional)</label>
+                <input
+                  type="url"
+                  placeholder="https://company.com/careers/apply or Google Form"
+                  value={formData.registrationUrl}
+                  onChange={(e) => setFormData({ ...formData, registrationUrl: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                />
               </div>
 
               <div className="space-y-1">
@@ -245,7 +267,7 @@ export const AdminPlacementsView: React.FC = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? 'Creating...' : 'Post Drive'}
                 </button>

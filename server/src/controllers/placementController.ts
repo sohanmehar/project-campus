@@ -3,10 +3,11 @@ import mongoose from 'mongoose';
 import Placement from '../models/Placement';
 import Application from '../models/Application';
 import User from '../models/User';
+import Notification from '../models/Notification';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 // @desc    Get active placement drives & student application history
-// @route   GET /api/v1/placements/drives
+// @route   GET /api/v1/placements/drives & /api/v1/placements
 // @access  Private
 export const getPlacementDrives = async (req: AuthRequest, res: Response) => {
   try {
@@ -21,6 +22,7 @@ export const getPlacementDrives = async (req: AuthRequest, res: Response) => {
           jobRole: 'Software Engineer (SDE-1)',
           ctc: 32.5,
           location: 'Bangalore, India',
+          registrationUrl: 'https://careers.google.com',
           eligibility: {
             minCgpa: 8.0,
             allowedDepartments: ['Computer Science', 'Electronics'],
@@ -35,6 +37,7 @@ export const getPlacementDrives = async (req: AuthRequest, res: Response) => {
           jobRole: 'Cloud Solutions Engineer',
           ctc: 28.0,
           location: 'Hyderabad, India',
+          registrationUrl: 'https://careers.microsoft.com',
           eligibility: {
             minCgpa: 7.5,
             allowedDepartments: ['Computer Science', 'Information Technology'],
@@ -47,17 +50,33 @@ export const getPlacementDrives = async (req: AuthRequest, res: Response) => {
       drives = await Placement.insertMany(defaultDrives);
     }
 
-    const applications = studentId ? await Application.find({ studentId }) : [];
-    const appMap = new Map(applications.map((a) => [a.placementId.toString(), a]));
+    let applications: any[] = [];
+    if (studentId) {
+      const query = mongoose.Types.ObjectId.isValid(studentId)
+        ? { $or: [{ studentId: new mongoose.Types.ObjectId(studentId) }, { studentId }] }
+        : { studentId };
+      applications = await Application.find(query);
+    }
+
+    const appMap = new Map();
+    for (const a of applications) {
+      if (a.placementId) {
+        appMap.set(a.placementId.toString(), a);
+      }
+      if (a.companyName) {
+        appMap.set(a.companyName.toLowerCase().trim(), a);
+      }
+    }
 
     const formattedDrives = drives.map((drive) => {
-      const app = appMap.get(drive._id.toString());
+      const app = appMap.get(drive._id.toString()) || appMap.get(drive.companyName.toLowerCase().trim());
       return {
         _id: drive._id,
         companyName: drive.companyName,
         jobRole: drive.jobRole,
         ctc: drive.ctc,
         location: drive.location,
+        registrationUrl: drive.registrationUrl || '',
         eligibility: drive.eligibility,
         applicationDeadline: drive.applicationDeadline,
         description: drive.description,
@@ -66,35 +85,40 @@ export const getPlacementDrives = async (req: AuthRequest, res: Response) => {
       };
     });
 
-    return res.status(200).json({ success: true, drives: formattedDrives });
+    return res.status(200).json({ 
+      success: true, 
+      drives: formattedDrives, 
+      placements: formattedDrives 
+    });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error fetching placement drives', error: error.message });
   }
 };
 
 // @desc    Admin: Create new placement drive
-// @route   POST /api/v1/placements/drives
+// @route   POST /api/v1/placements/drives & /api/v1/placements
 // @access  Private (Admin)
 export const createPlacementDrive = async (req: AuthRequest, res: Response) => {
   try {
-    const { companyName, jobRole, ctc, location, minCgpa, requiredSkills, description } = req.body;
+    const { companyName, jobRole, ctc, location, minCgpa, requiredSkills, description, registrationUrl, applyUrl } = req.body;
 
     if (!companyName || !jobRole || !ctc) {
       return res.status(400).json({ message: 'Company name, job role, and CTC are required.' });
     }
 
     const skillsArray = typeof requiredSkills === 'string' 
-      ? requiredSkills.split(',').map((s) => s.trim()) 
-      : requiredSkills || ['Data Structures'];
+      ? requiredSkills.split(',').map((s) => s.trim()).filter(Boolean)
+      : requiredSkills || ['Data Structures', 'Problem Solving'];
 
     const newDrive = new Placement({
-      companyName,
-      jobRole,
+      companyName: companyName.trim(),
+      jobRole: jobRole.trim(),
       ctc: Number(ctc),
       location: location || 'Bangalore, India',
+      registrationUrl: registrationUrl || applyUrl || '',
       eligibility: {
-        minCgpa: Number(minCgpa) || 7.5,
-        allowedDepartments: ['Computer Science', 'Electronics'],
+        minCgpa: Number(minCgpa) || 7.0,
+        allowedDepartments: ['Computer Science', 'Electronics', 'Information Technology'],
         requiredSkills: skillsArray,
       },
       applicationDeadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
@@ -103,10 +127,23 @@ export const createPlacementDrive = async (req: AuthRequest, res: Response) => {
 
     await newDrive.save();
 
+    // Auto-create student notification for the new drive
+    try {
+      await Notification.create({
+        title: `New Placement Drive: ${companyName}`,
+        message: `${companyName} is hiring for ${jobRole} (${ctc} LPA). Apply before deadline!`,
+        type: 'placement',
+        recipientRole: 'student',
+      });
+    } catch (nErr) {
+      console.warn('Could not dispatch placement notification:', nErr);
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Placement drive created successfully',
       drive: newDrive,
+      placement: newDrive,
     });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error creating placement drive', error: error.message });
@@ -208,10 +245,16 @@ export const applyForPlacement = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Placement drive not found in database.' });
     }
 
-    // Check existing application
+    const userObjId = new mongoose.Types.ObjectId(studentId);
+    const plObjId = new mongoose.Types.ObjectId(placementId);
+
+    // Check existing application by ObjectId OR company name
     const existingApp = await Application.findOne({
-      studentId: new mongoose.Types.ObjectId(studentId),
-      placementId: new mongoose.Types.ObjectId(placementId),
+      $or: [
+        { studentId: userObjId, placementId: plObjId },
+        { studentId: studentId as any, placementId: placementId as any },
+        { studentId: userObjId, companyName: placement.companyName },
+      ],
     });
 
     if (existingApp) {
@@ -221,14 +264,15 @@ export const applyForPlacement = async (req: AuthRequest, res: Response) => {
     const studentUser = await User.findById(studentId);
 
     const application = new Application({
-      studentId: new mongoose.Types.ObjectId(studentId),
-      placementId: new mongoose.Types.ObjectId(placementId),
+      studentId: userObjId,
+      placementId: plObjId,
       companyName: placement.companyName,
       jobRole: placement.jobRole,
-      studentName: studentUser?.name || 'Alex Mercer',
+      studentName: studentUser?.name || 'Student Applicant',
       rollNumber: studentUser?.studentDetails?.rollNumber || 'CS-2024-042',
       resumeUrl: resumeUrl || studentUser?.studentDetails?.resumeUrl || '',
       status: 'applied',
+      appliedAt: new Date(),
     });
 
     await application.save();
@@ -253,9 +297,11 @@ export const getStudentApplications = async (req: AuthRequest, res: Response) =>
       return res.status(401).json({ message: 'Unauthorized student access.' });
     }
 
-    const rawApplications = await Application.find({
-      studentId: new mongoose.Types.ObjectId(studentId),
-    })
+    const query = mongoose.Types.ObjectId.isValid(studentId)
+      ? { $or: [{ studentId: new mongoose.Types.ObjectId(studentId) }, { studentId }] }
+      : { studentId };
+
+    const rawApplications = await Application.find(query)
       .populate('placementId')
       .sort({ createdAt: -1 });
 
@@ -263,9 +309,10 @@ export const getStudentApplications = async (req: AuthRequest, res: Response) =>
       const placement = app.placementId || {};
       return {
         _id: app._id,
+        placementId: placement._id ? placement._id.toString() : (app.placementId ? app.placementId.toString() : ''),
         companyName: app.companyName || placement.companyName || app.company || 'Tech Drive',
         jobRole: app.jobRole || placement.jobRole || app.role || 'Software Development Engineer',
-        createdAt: app.createdAt,
+        createdAt: app.createdAt || app.appliedAt,
         status: app.status || 'applied',
       };
     });

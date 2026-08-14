@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
 import { useToastStore } from './store/useToastStore';
+import { useThemeStore } from './store/useThemeStore';
 
 // Layout & Auth
 import { Login } from './pages/auth/Login';
@@ -16,6 +17,7 @@ import { PlacementsView } from './pages/student/PlacementsView';
 import { CampusGptView } from './pages/student/CampusGptView';
 import { AgentMarketplaceView } from './pages/student/AgentMarketplaceView';
 import { EventsView } from './pages/student/EventsView';
+import { ClubsView } from './pages/student/ClubsView';
 import { ComplaintsView } from './pages/student/ComplaintsView';
 import { SettingsView } from './pages/student/SettingsView';
 
@@ -23,6 +25,7 @@ import { SettingsView } from './pages/student/SettingsView';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { StudentRegistryView } from './pages/admin/StudentRegistryView';
 import { FacultyRegistryView } from './pages/admin/FacultyRegistryView';
+import { AcademicStructureView } from './pages/admin/AcademicStructureView';
 import { AdminPlacementsView } from './pages/admin/AdminPlacementsView';
 import { AiMetricsView } from './pages/admin/AiMetricsView';
 import { SystemSettingsView } from './pages/admin/SystemSettingsView';
@@ -33,6 +36,9 @@ import { FacultyAttendanceView } from './pages/faculty/FacultyAttendanceView';
 import { FacultyNoticesView } from './pages/faculty/FacultyNoticesView';
 import { FacultyCourseCatalogView } from './pages/faculty/FacultyCourseCatalogView';
 import { FacultyGradeAssignmentsView } from './pages/faculty/FacultyGradeAssignmentsView';
+
+// Coordinator Pages
+import { CoordinatorDashboard } from './pages/coordinator/CoordinatorDashboard';
 
 // 1. Protected Route Wrapper (Redirects unauthenticated users to /login)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -77,16 +83,17 @@ const DefaultDashboardRedirect: React.FC = () => {
   const { user } = useAuthStore();
   if (user?.role === 'admin') return <AdminDashboard />;
   if (user?.role === 'faculty') return <FacultyDashboard />;
-  if (user?.role === 'coordinator') return <EventsView />;
+  if (user?.role === 'coordinator') return <CoordinatorDashboard />;
   return <StudentDashboard />;
 };
 
 export default function App() {
   const { user, isAuthenticated, isLoading, checkAuth } = useAuthStore();
   const { addToast } = useToastStore();
+  const { theme, setTheme } = useThemeStore();
 
   useEffect(() => {
-    document.documentElement.classList.add('dark');
+    setTheme(theme);
     
     // Only check server session if we don't already have an active authenticated user in state
     if (!isAuthenticated || !user) {
@@ -126,11 +133,17 @@ export default function App() {
                   {/* Default Central Dashboard Route */}
                   <Route path="/dashboard" element={<DefaultDashboardRedirect />} />
 
-                  {/* Student Routes */}
+                  {/* Academic & Course Routes */}
                   <Route
                     path="/academics"
                     element={
-                      user?.role === 'faculty' ? <FacultyCourseCatalogView /> : <AcademicsView />
+                      user?.role === 'faculty' ? (
+                        <FacultyCourseCatalogView />
+                      ) : user?.role === 'admin' ? (
+                        <AcademicStructureView />
+                      ) : (
+                        <AcademicsView />
+                      )
                     }
                   />
                   <Route
@@ -145,6 +158,7 @@ export default function App() {
                   />
                   <Route path="/placements" element={user?.role === 'admin' ? <AdminPlacementsView /> : <PlacementsView />} />
                   <Route path="/events" element={<EventsView />} />
+                  <Route path="/clubs" element={<ClubsView />} />
                   <Route path="/complaints" element={<ComplaintsView />} />
                   <Route path="/ai-workspace" element={<CampusGptView />} />
                   <Route

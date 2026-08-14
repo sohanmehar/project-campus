@@ -3,6 +3,11 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IApplication extends Document {
   placementId: mongoose.Types.ObjectId;
   studentId: mongoose.Types.ObjectId;
+  companyName?: string;
+  jobRole?: string;
+  studentName?: string;
+  rollNumber?: string;
+  resumeUrl?: string;
   status: 'applied' | 'shortlisted' | 'interview' | 'selected' | 'rejected';
   appliedAt: Date;
   createdAt: Date;
@@ -13,6 +18,11 @@ const ApplicationSchema: Schema = new Schema(
   {
     placementId: { type: Schema.Types.ObjectId, ref: 'Placement', required: true, index: true },
     studentId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    companyName: { type: String, default: '' },
+    jobRole: { type: String, default: '' },
+    studentName: { type: String, default: '' },
+    rollNumber: { type: String, default: '' },
+    resumeUrl: { type: String, default: '' },
     status: {
       type: String,
       enum: ['applied', 'shortlisted', 'interview', 'selected', 'rejected'],

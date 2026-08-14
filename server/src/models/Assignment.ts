@@ -5,7 +5,8 @@ export interface IAssignment extends Document {
   description: string;
   courseName: string;
   courseCode: string;
-  facultyId: mongoose.Types.ObjectId;
+  subject?: string;
+  facultyId?: mongoose.Types.ObjectId;
   deadline: Date;
   totalMarks: number;
   priority: 'low' | 'medium' | 'high';
@@ -16,10 +17,11 @@ export interface IAssignment extends Document {
 const AssignmentSchema: Schema = new Schema(
   {
     title: { type: String, required: true, trim: true },
-    description: { type: String, required: true },
-    courseName: { type: String, required: true, default: 'Computer Science' },
+    description: { type: String, required: true, default: 'Assignment problem statement and rubric.' },
+    courseName: { type: String, required: true, default: 'Database Systems & SQL' },
     courseCode: { type: String, required: true, default: 'CS-401' },
-    facultyId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    subject: { type: String, default: 'Database Systems & SQL' },
+    facultyId: { type: Schema.Types.ObjectId, ref: 'User', required: false },
     deadline: { type: Date, required: true, index: true },
     totalMarks: { type: Number, default: 100 },
     priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },

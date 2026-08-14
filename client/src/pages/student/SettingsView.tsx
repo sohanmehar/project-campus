@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
-import { User, Code, Save } from 'lucide-react';
+import { User, Code, Save, Sun, Moon } from 'lucide-react';
+import { useThemeStore } from '../../store/useThemeStore';
 
 export const SettingsView: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const { addToast } = useToastStore();
+  const { theme, setTheme } = useThemeStore();
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -28,18 +30,33 @@ export const SettingsView: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmedPhone = formData.phone.trim();
+    const digitsOnly = trimmedPhone.replace(/\D/g, '');
+
+    if (!trimmedPhone || digitsOnly.length < 7 || digitsOnly.length > 15 || !/^[+]?[\d\s\-()]{7,16}$/.test(trimmedPhone)) {
+      addToast(
+        'error',
+        'Validation Error',
+        'Please enter a valid numeric phone number with digits (e.g., +91 98765 43210 or 10-digit number).'
+      );
+      return;
+    }
+
     setSaving(true);
 
     try {
-      const res = await axios.put('/auth/profile', formData);
+      const res = await axios.put('/auth/profile', {
+        ...formData,
+        phone: trimmedPhone,
+      });
       if (res.data.user) {
-        // update local form state with returned user data (avoid relying on store setter)
+        // update local form state with returned user data
         const u = res.data.user as any;
         setFormData((prev) => ({
           ...prev,
           name: u.name ?? prev.name,
           email: u.email ?? prev.email,
-          phone: u.studentDetails?.phone ?? prev.phone,
+          phone: u.phone || u.studentDetails?.phone || prev.phone,
           rollNumber: u.studentDetails?.rollNumber ?? prev.rollNumber,
           department: u.department ?? prev.department,
           currentSemester: u.studentDetails?.currentSemester ?? prev.currentSemester,
@@ -60,27 +77,91 @@ export const SettingsView: React.FC = () => {
     }
   };
 
+  const isStudent = !user?.role || user?.role === 'student';
+  const isCoordinator = user?.role === 'coordinator';
+  const isFaculty = user?.role === 'faculty';
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
         <div>
           <span className="micro-label text-blue-400">Account Management</span>
-          <h1 className="text-2xl font-bold text-white tracking-tight mt-0.5">Student Profile & Settings</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-0.5">
+            {isStudent
+              ? 'Student Profile & Settings'
+              : isCoordinator
+              ? 'Coordinator Profile & Settings'
+              : isFaculty
+              ? 'Faculty Profile & Settings'
+              : 'Profile & Settings'}
+          </h1>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 text-xs">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 text-xs">
+        {/* Appearance & Theme Preference */}
+        <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-4 rounded-2xl">
+          <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+            <Sun className="w-4 h-4 text-amber-400" />
+            <h2 className="font-bold text-white text-sm">Appearance & System Theme</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={() => setTheme('dark')}
+              className={`p-4 rounded-xl border flex items-center justify-between transition cursor-pointer ${
+                theme === 'dark'
+                  ? 'bg-slate-950 border-blue-500 shadow-lg shadow-blue-500/10'
+                  : 'bg-slate-950/40 border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-blue-400">
+                  <Moon className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-white text-xs">Dark Mode</div>
+                  <div className="text-[10px] text-slate-400">Sleek midnight high-contrast palette</div>
+                </div>
+              </div>
+              {theme === 'dark' && <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTheme('light')}
+              className={`p-4 rounded-xl border flex items-center justify-between transition cursor-pointer ${
+                theme === 'light'
+                  ? 'bg-white border-blue-500 shadow-lg shadow-blue-500/10 text-slate-900'
+                  : 'bg-slate-950/40 border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-amber-500">
+                  <Sun className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-slate-900 text-xs">Light Mode</div>
+                  <div className="text-[10px] text-slate-500">Clean, bright daytime aesthetic</div>
+                </div>
+              </div>
+              {theme === 'light' && <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+            </button>
+          </div>
+        </div>
+
         {/* Basic Personal Information */}
-        <div className="stitch-card p-6 bg-slate-900 border-slate-800 space-y-4">
+        <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-4 rounded-2xl">
           <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
             <User className="w-4 h-4 text-blue-400" />
             <h2 className="font-bold text-white text-sm">Personal Information</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-1">
-              <label className="micro-label text-slate-400">Full Name</label>
+              <label className="micro-label text-slate-400">Full Name *</label>
               <input
                 type="text"
                 required
@@ -101,121 +182,138 @@ export const SettingsView: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="micro-label text-slate-400">Phone Number</label>
+              <label className="micro-label text-slate-400">
+                Phone Number (Digits only) <span className="text-rose-400 font-bold">*</span>
+              </label>
               <input
-                type="text"
+                type="tel"
+                required
+                pattern="[+]?[0-9\s\-()]{7,16}"
+                placeholder="e.g. +91 98765 43210"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^[+]?[\d\s\-()]*$/.test(val)) {
+                    setFormData({ ...formData, phone: val });
+                  }
+                }}
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="micro-label text-slate-400">Roll Number</label>
+              <label className="micro-label text-slate-400">Department / Office</label>
               <input
                 type="text"
-                value={formData.rollNumber}
-                onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="micro-label text-slate-400">Department</label>
-              <input
-                type="text"
-                disabled
                 value={formData.department}
-                className="w-full px-3 py-2 bg-slate-950/60 border border-slate-800/80 rounded-lg text-xs text-slate-400 cursor-not-allowed"
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-semibold"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="micro-label text-slate-400">Current Semester</label>
-              <input
-                type="number"
-                min={1}
-                max={8}
-                value={formData.currentSemester}
-                onChange={(e) => setFormData({ ...formData, currentSemester: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
-            </div>
+            {isStudent && (
+              <>
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">Roll Number</label>
+                  <input
+                    type="text"
+                    value={formData.rollNumber}
+                    onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">Current Semester</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={8}
+                    value={formData.currentSemester}
+                    onChange={(e) => setFormData({ ...formData, currentSemester: parseInt(e.target.value) || 1 })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
-          <div className="space-y-1">
-            <label className="micro-label text-slate-400">Student Bio / Objective</label>
+          <div className="space-y-1 pt-1">
+            <label className="micro-label text-slate-400">
+              {isStudent ? 'Student Bio' : 'Professional / Role Bio'}
+            </label>
             <textarea
-              rows={3}
+              rows={2}
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 resize-none"
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 leading-relaxed"
             />
           </div>
         </div>
 
-        {/* Developer Links & Resume */}
-        <div className="stitch-card p-6 bg-slate-900 border-slate-800 space-y-4">
-          <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
-            <Code className="w-4 h-4 text-purple-400" />
-            <h2 className="font-bold text-white text-sm">Skills, Links & Resume</h2>
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="micro-label text-slate-400">Technical Skills (Comma Separated)</label>
-              <input
-                type="text"
-                placeholder="e.g. React, Node.js, TypeScript, C++, Python"
-                value={formData.skills}
-                onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
+        {/* Technical Portfolio & Resume (Students Only) */}
+        {isStudent && (
+          <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-4 rounded-2xl">
+            <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+              <Code className="w-4 h-4 text-emerald-400" />
+              <h2 className="font-bold text-white text-sm">Portfolio & Placement Links</h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
               <div className="space-y-1">
-                <label className="micro-label text-slate-400">LinkedIn Profile URL</label>
+                <label className="micro-label text-slate-400">Technical Skills (Comma separated)</label>
                 <input
-                  type="url"
-                  value={formData.linkedIn}
-                  onChange={(e) => setFormData({ ...formData, linkedIn: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  type="text"
+                  value={formData.skills}
+                  onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">LinkedIn Profile URL</label>
+                  <input
+                    type="url"
+                    value={formData.linkedIn}
+                    onChange={(e) => setFormData({ ...formData, linkedIn: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">GitHub Profile URL</label>
+                  <input
+                    type="url"
+                    value={formData.github}
+                    onChange={(e) => setFormData({ ...formData, github: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-purple-500 font-mono"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1">
-                <label className="micro-label text-slate-400">GitHub Profile URL</label>
+                <label className="micro-label text-slate-400">Verified Resume PDF Link</label>
                 <input
                   type="url"
-                  value={formData.github}
-                  onChange={(e) => setFormData({ ...formData, github: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+                  value={formData.resumeUrl}
+                  onChange={(e) => setFormData({ ...formData, resumeUrl: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
             </div>
-
-            <div className="space-y-1">
-              <label className="micro-label text-slate-400">Resume Link (Google Drive / PDF URL)</label>
-              <input
-                type="url"
-                value={formData.resumeUrl}
-                onChange={(e) => setFormData({ ...formData, resumeUrl: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
-            </div>
           </div>
-        </div>
+        )}
 
-        {/* Submit Action Bar */}
+        {/* Submit Actions */}
         <div className="flex justify-end pt-2">
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-600/20 disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl flex items-center justify-center space-x-2 transition shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer text-xs"
           >
             <Save className="w-4 h-4" />
-            <span>{saving ? 'Saving to Database...' : 'Save Profile Changes'}</span>
+            <span>{saving ? 'Saving Changes...' : 'Save Student Details'}</span>
           </button>
         </div>
       </form>

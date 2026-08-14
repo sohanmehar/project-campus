@@ -156,7 +156,14 @@ export const getMe = async (req: any, res: Response) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    return res.status(200).json({ success: true, user });
+    const userObj = user.toObject();
+    return res.status(200).json({
+      success: true,
+      user: {
+        ...userObj,
+        id: user._id.toString(),
+      }
+    });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error fetching user profile', error: error.message });
   }
@@ -190,23 +197,41 @@ export const updateStudentProfile = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'User record not found.' });
     }
 
+    // Phone validation (required numeric phone number)
+    if (phone !== undefined) {
+      const trimmedPhone = String(phone).trim();
+      if (!trimmedPhone) {
+        return res.status(400).json({ message: 'Phone number is a required field.' });
+      }
+      const digitsOnly = trimmedPhone.replace(/\D/g, '');
+      const isValidPhone = /^[+]?[\d\s\-()]{7,16}$/.test(trimmedPhone) && digitsOnly.length >= 7 && digitsOnly.length <= 15;
+      if (!isValidPhone) {
+        return res.status(400).json({ 
+          message: 'Invalid phone number. Phone number must contain valid digits (e.g., +91 9876543210 or 10-digit number).' 
+        });
+      }
+      user.phone = trimmedPhone;
+    }
+
     // Update root fields
-    if (name) user.name = name;
-    if (phone) (user as any).phone = phone;
+    if (name && name.trim()) user.name = name.trim();
 
     // Initialize or update studentDetails subdocument
     if (!user.studentDetails) {
       user.studentDetails = {
         rollNumber: '',
-        semester: 0,
+        semester: 1,
         cgpa: 0,
         skills: [],
       };
     }
 
+    if (phone !== undefined) {
+      user.studentDetails!.phone = phone.trim();
+    }
     if (bio !== undefined) user.studentDetails!.bio = bio;
     if (skills !== undefined) user.studentDetails!.skills = Array.isArray(skills) ? skills : skills.split(',').map((s: string) => s.trim());
-    
+
     const resolvedLinkedin = linkedinUrl !== undefined ? linkedinUrl : linkedIn;
     if (resolvedLinkedin !== undefined) {
       user.studentDetails!.linkedinUrl = resolvedLinkedin;
