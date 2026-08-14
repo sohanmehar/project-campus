@@ -397,7 +397,7 @@ export const LandingPage: React.FC = () => {
           <Sparkles className="w-4 h-4 text-blue-400" />
           <span>CampusGPT Enterprise OS</span>
         </div>
-        <p>© 2026 CampusGPT. DevFusion 4.0 Hackathon Edition. All rights reserved.</p>
+        <p>© 2026 CampusGPT Enterprise OS. DevFusion 4.0 Hackathon Edition. Built by Sohan Mehar & Suchitra Karde. All rights reserved.</p>
       </footer>
     </div>
   );

@@ -285,6 +285,10 @@ export const Login: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <p className="text-center text-[11px] text-slate-500 pt-1">
+          © 2026 CampusGPT Enterprise OS. Built by Sohan Mehar & Suchitra Karde.
+        </p>
       </div>
 
       {/* Forgot Password / OTP Reset Modal */}

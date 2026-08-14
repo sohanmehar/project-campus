@@ -345,3 +345,10 @@ In the spirit of complete transparency with the hackathon evaluation jury:
 
 ## 📜 License
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">
+  <sub>© 2026 CampusGPT Enterprise OS — DevFusion 4.0 Hackathon. Built by Sohan Mehar & Suchitra Karde. All Rights Reserved.</sub>
+</p>
+
