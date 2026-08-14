@@ -278,9 +278,8 @@ docker-compose up --build
 
 ## 📄 API Documentation
 
-Complete REST API specification available in two formats:
-1. **Interactive Markdown**: [`docs/API_DOCUMENTATION.md`](file:///docs/API_DOCUMENTATION.md)
-2. **Printable PDF**: [`docs/CampusGPT_API_Documentation.pdf`](file:///docs/CampusGPT_API_Documentation.pdf)
+Complete REST API specification:
+1. **Printable PDF**: [`docs/CampusGPT_API_Documentation.pdf`](file:///docs/CampusGPT_API_Documentation.pdf)
 
 ---
 
