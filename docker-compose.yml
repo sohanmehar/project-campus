@@ -12,7 +12,7 @@ services:
       - NODE_ENV=production
       - MONGO_URI=${MONGO_URI}
       - JWT_SECRET=${JWT_SECRET}
-      - CLIENT_URL=${CLIENT_URL:-http://localhost:80}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:5173}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     restart: unless-stopped
 
@@ -25,4 +25,3 @@ services:
     depends_on:
       - server
     restart: unless-stopped
-
