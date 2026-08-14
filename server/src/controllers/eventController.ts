@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Event from '../models/Event';
 import EventRegistration from '../models/EventRegistration';
 import User from '../models/User';
+import ActivityApproval from '../models/ActivityApproval';
 import Notification from '../models/Notification';
 import { AuthRequest } from '../middleware/authMiddleware';
 
@@ -200,6 +201,22 @@ export const registerForEvent = async (req: AuthRequest, res: Response) => {
     });
 
     await registration.save();
+
+    // Create an ActivityApproval record in MongoDB for Coordinator
+    try {
+      await ActivityApproval.create({
+        studentId: userObjId,
+        studentName: studentUser?.name || 'Student Attendee',
+        rollNumber: studentUser?.studentDetails?.rollNumber || 'STU-001',
+        department: studentUser?.department || 'Computer Science & Engineering',
+        requestType: 'Event Organizer Pass',
+        targetName: event.title,
+        status: 'pending',
+        appliedAt: new Date(),
+      });
+    } catch (err) {
+      console.warn('Could not record ActivityApproval for event registration:', err);
+    }
 
     return res.status(200).json({
       success: true,

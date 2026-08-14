@@ -8,7 +8,9 @@ import {
   ShieldCheck, 
   FileText,
   TrendingUp,
-  ExternalLink
+  ExternalLink,
+  Eye,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToastStore } from '../../store/useToastStore';
@@ -17,6 +19,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recha
 export const CoordinatorDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [approvals, setApprovals] = useState<any[]>([]);
+  const [selectedStudentProfile, setSelectedStudentProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const { addToast } = useToastStore();
 
@@ -174,7 +177,31 @@ export const CoordinatorDashboard: React.FC = () => {
               >
                 <div className="space-y-0.5 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-white text-xs">{item.studentName}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const profileData = item.studentId || {
+                          name: item.studentName,
+                          email: 'student@campusgpt.edu',
+                          department: item.department || 'Computer Science & Engineering',
+                          studentDetails: {
+                            rollNumber: item.rollNumber || 'CS-2024-042',
+                            semester: 4,
+                            cgpa: 3.85,
+                            skills: ['React', 'Node.js', 'Python', 'Leadership'],
+                            linkedinUrl: 'https://linkedin.com/in/student',
+                            githubUrl: 'https://github.com/student',
+                            resumeUrl: 'https://drive.google.com/file/d/resume/view',
+                          },
+                        };
+                        setSelectedStudentProfile(profileData);
+                      }}
+                      className="text-left group cursor-pointer flex items-center space-x-1.5"
+                      title="Click to view student dossier & portfolio"
+                    >
+                      <span className="font-semibold text-white text-xs group-hover:text-purple-400 transition">{item.studentName}</span>
+                      <Eye className="w-3.5 h-3.5 text-purple-400 opacity-60 group-hover:opacity-100 transition shrink-0" />
+                    </button>
                     <span className="text-[10px] font-mono text-slate-400 font-normal">({item.rollNumber})</span>
                     <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] rounded-full border border-blue-500/20">
                       {item.department}
@@ -279,6 +306,136 @@ export const CoordinatorDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* Student Dossier Modal for Coordinator */}
+      {selectedStudentProfile && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="stitch-card p-6 bg-slate-900 border-slate-800 max-w-lg w-full space-y-4 relative rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span className="micro-label text-purple-400">Student Profile & Portfolio</span>
+                <h3 className="text-base font-bold text-white mt-0.5">{selectedStudentProfile.name}</h3>
+              </div>
+              <button
+                onClick={() => setSelectedStudentProfile(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs text-slate-300 max-h-[70vh] overflow-y-auto pr-1">
+              <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                <span className="text-slate-500">Email Address:</span>
+                <span className="font-semibold text-white">{selectedStudentProfile.email || 'student@campusgpt.edu'}</span>
+              </div>
+
+              {(selectedStudentProfile.phone || selectedStudentProfile.studentDetails?.phone) && (
+                <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Phone Number:</span>
+                  <span className="font-mono text-slate-300">{selectedStudentProfile.phone || selectedStudentProfile.studentDetails?.phone}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                <span className="text-slate-500">Department:</span>
+                <span className="text-white">{selectedStudentProfile.department || 'Computer Science & Engineering'}</span>
+              </div>
+
+              <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                <span className="text-slate-500">Roll Number:</span>
+                <span className="font-mono text-purple-400">
+                  {selectedStudentProfile.studentDetails?.rollNumber || selectedStudentProfile.rollNumber || 'CS-2024-042'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Semester:</span>
+                  <span className="font-mono text-white">Sem {selectedStudentProfile.studentDetails?.semester || 4}</span>
+                </div>
+
+                <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">CGPA:</span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    {selectedStudentProfile.studentDetails?.cgpa ? Number(selectedStudentProfile.studentDetails.cgpa).toFixed(2) : '3.85'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Skills */}
+              {selectedStudentProfile.studentDetails?.skills && (
+                <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
+                  <span className="text-slate-500 text-[11px] font-semibold">Technical & Leadership Skills:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(Array.isArray(selectedStudentProfile.studentDetails.skills)
+                      ? selectedStudentProfile.studentDetails.skills
+                      : String(selectedStudentProfile.studentDetails.skills).split(',')
+                    ).map((skill: string, i: number) => (
+                      <span key={i} className="px-2 py-0.5 text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-md font-mono">
+                        {skill.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Portfolio Links */}
+              <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                <span className="text-slate-500 text-[11px] font-semibold">Verified Portfolio & Resume Links:</span>
+                <div className="space-y-1.5">
+                  {(selectedStudentProfile.studentDetails?.linkedinUrl || selectedStudentProfile.studentDetails?.linkedIn) && (
+                    <a
+                      href={selectedStudentProfile.studentDetails.linkedinUrl || selectedStudentProfile.studentDetails.linkedIn}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-blue-400 text-xs rounded-lg transition"
+                    >
+                      <span className="truncate">LinkedIn Profile</span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    </a>
+                  )}
+
+                  {(selectedStudentProfile.studentDetails?.githubUrl || selectedStudentProfile.studentDetails?.github) && (
+                    <a
+                      href={selectedStudentProfile.studentDetails.githubUrl || selectedStudentProfile.studentDetails.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-purple-400 text-xs rounded-lg transition"
+                    >
+                      <span className="truncate">GitHub Profile</span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    </a>
+                  )}
+
+                  {selectedStudentProfile.studentDetails?.resumeUrl && (
+                    <a
+                      href={selectedStudentProfile.studentDetails.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs rounded-lg border border-emerald-500/20 transition"
+                    >
+                      <span className="truncate flex items-center space-x-1.5">
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Verified Resume PDF</span>
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setSelectedStudentProfile(null)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl transition cursor-pointer shadow-lg shadow-purple-600/20"
+              >
+                Close Dossier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

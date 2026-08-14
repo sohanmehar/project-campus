@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import Club from '../models/Club';
+import User from '../models/User';
+import ActivityApproval from '../models/ActivityApproval';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 // @desc    Get all campus clubs with student membership status
@@ -135,6 +137,23 @@ export const joinClub = async (req: AuthRequest, res: Response) => {
     club.members.push(userObjId);
     club.memberCount = (club.memberCount || 0) + 1;
     await club.save();
+
+    // Create an ActivityApproval record in MongoDB for the Coordinator Action Queue
+    try {
+      const studentUser = await User.findById(studentId);
+      await ActivityApproval.create({
+        studentId: userObjId,
+        studentName: studentUser?.name || 'Student Member',
+        rollNumber: studentUser?.studentDetails?.rollNumber || 'STU-001',
+        department: studentUser?.department || 'Computer Science & Engineering',
+        requestType: 'Club Executive Membership',
+        targetName: club.name,
+        status: 'pending',
+        appliedAt: new Date(),
+      });
+    } catch (err) {
+      console.warn('Could not record ActivityApproval for club join:', err);
+    }
 
     return res.status(200).json({
       success: true,

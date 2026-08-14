@@ -13,10 +13,13 @@ import { AuthRequest } from '../middleware/authMiddleware';
 // @access  Private (Coordinator/Admin)
 export const getCoordinatorStats = async (req: AuthRequest, res: Response) => {
   try {
-    // 1. Ensure initial activity approval requests exist for real students if collection is empty
-    const existingApprovalsCount = await ActivityApproval.countDocuments();
+    // 1. Ensure initial activity approval requests exist for real students if pending queue is empty
+    const existingApprovalsCount = await ActivityApproval.countDocuments({ status: 'pending' });
     if (existingApprovalsCount === 0) {
-      const realStudents = await User.find({ role: 'student' }).limit(4);
+      let realStudents = await User.find({ role: 'student' }).limit(4);
+      if (realStudents.length === 0) {
+        realStudents = await User.find().limit(4);
+      }
       if (realStudents.length > 0) {
         const seedRequests = realStudents.map((stu: any, idx) => ({
           studentId: stu._id,
@@ -37,7 +40,7 @@ export const getCoordinatorStats = async (req: AuthRequest, res: Response) => {
       Event.find().sort({ date: 1 }),
       Club.find().sort({ memberCount: -1 }),
       EventRegistration.find().populate('eventId').populate('studentId', 'name email department rollNumber'),
-      ActivityApproval.find({ status: 'pending' }).sort({ createdAt: -1 }),
+      ActivityApproval.find({ status: 'pending' }).populate('studentId', 'name email phone department studentDetails').sort({ createdAt: -1 }),
     ]);
 
     const totalEvents = events.length;

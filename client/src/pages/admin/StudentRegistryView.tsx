@@ -11,7 +11,9 @@ import {
   Plus,
   X,
   Download,
-  Upload
+  Upload,
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 
 export const StudentRegistryView: React.FC = () => {
@@ -433,47 +435,123 @@ export const StudentRegistryView: React.FC = () => {
       {/* Student Dossier Modal */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="stitch-card p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4 relative">
+          <div className="stitch-card p-6 bg-slate-900 border-slate-800 max-w-lg w-full space-y-4 relative rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
                 <span className="micro-label text-blue-400">Student Record Dossier</span>
                 <h3 className="text-base font-bold text-white mt-0.5">{selectedStudent.name}</h3>
               </div>
-              <button onClick={() => setSelectedStudent(null)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setSelectedStudent(null)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-slate-300">
-              <div className="flex justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+            <div className="space-y-2.5 text-xs text-slate-300 max-h-[70vh] overflow-y-auto pr-1">
+              <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-slate-500">Email Address:</span>
                 <span className="font-semibold text-white">{selectedStudent.email}</span>
               </div>
 
-              <div className="flex justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+              {(selectedStudent.phone || selectedStudent.studentDetails?.phone) && (
+                <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Phone Number:</span>
+                  <span className="font-mono text-slate-300">{selectedStudent.phone || selectedStudent.studentDetails?.phone}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-slate-500">Department:</span>
-                <span className="text-white">{selectedStudent.department || 'Computer Science'}</span>
+                <span className="text-white">{selectedStudent.department || 'Computer Science & Engineering'}</span>
               </div>
 
-              <div className="flex justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+              <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-slate-500">Roll Number:</span>
                 <span className="font-mono text-blue-400">
                   {selectedStudent.studentDetails?.rollNumber || 'STU-' + selectedStudent._id?.slice(-4)}
                 </span>
               </div>
 
-              <div className="flex justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
-                <span className="text-slate-500">Academic CGPA:</span>
-                <span className="font-mono font-bold text-emerald-400">
-                  {selectedStudent.studentDetails?.cgpa ? Number(selectedStudent.studentDetails.cgpa).toFixed(2) : '3.80'}
-                </span>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Semester:</span>
+                  <span className="font-mono text-white">Sem {selectedStudent.studentDetails?.semester || 1}</span>
+                </div>
+
+                <div className="flex justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">CGPA:</span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    {selectedStudent.studentDetails?.cgpa ? Number(selectedStudent.studentDetails.cgpa).toFixed(2) : '3.80'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Skills */}
+              {selectedStudent.studentDetails?.skills && (
+                <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
+                  <span className="text-slate-500 text-[11px] font-semibold">Technical Skills:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(Array.isArray(selectedStudent.studentDetails.skills)
+                      ? selectedStudent.studentDetails.skills
+                      : String(selectedStudent.studentDetails.skills).split(',')
+                    ).map((skill: string, i: number) => (
+                      <span key={i} className="px-2 py-0.5 text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md font-mono">
+                        {skill.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Portfolio Links */}
+              <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                <span className="text-slate-500 text-[11px] font-semibold">Portfolio & Verified Links:</span>
+                <div className="space-y-1.5">
+                  {(selectedStudent.studentDetails?.linkedinUrl || selectedStudent.studentDetails?.linkedIn) && (
+                    <a
+                      href={selectedStudent.studentDetails.linkedinUrl || selectedStudent.studentDetails.linkedIn}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-blue-400 text-xs rounded-lg transition"
+                    >
+                      <span className="truncate">LinkedIn Profile</span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    </a>
+                  )}
+
+                  {(selectedStudent.studentDetails?.githubUrl || selectedStudent.studentDetails?.github) && (
+                    <a
+                      href={selectedStudent.studentDetails.githubUrl || selectedStudent.studentDetails.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-purple-400 text-xs rounded-lg transition"
+                    >
+                      <span className="truncate">GitHub Portfolio</span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    </a>
+                  )}
+
+                  {selectedStudent.studentDetails?.resumeUrl && (
+                    <a
+                      href={selectedStudent.studentDetails.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs rounded-lg border border-emerald-500/20 transition"
+                    >
+                      <span className="truncate flex items-center space-x-1.5">
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Verified Resume PDF</span>
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedStudent(null)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
               >
                 Close Dossier
               </button>
