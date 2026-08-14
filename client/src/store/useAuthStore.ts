@@ -39,6 +39,7 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   login: (credentials: any) => Promise<void>;
+  googleLogin: (payload: { credential?: string; demoUser?: any }) => Promise<void>;
   signup: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -79,6 +80,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Login failed. Invalid credentials.';
+      set({
+        error: errorMsg,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  googleLogin: async (payload) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post('/auth/google', payload);
+      const rawUser = response.data?.user;
+      const token = response.data?.token;
+
+      if (token) {
+        localStorage.setItem('campusgpt_token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
+
+      if (rawUser) {
+        const user = {
+          ...rawUser,
+          id: (rawUser.id || rawUser._id || '').toString(),
+        };
+        set({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
+      }
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'Google authentication failed.';
       set({
         error: errorMsg,
         user: null,

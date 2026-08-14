@@ -51,7 +51,7 @@ body {
 
 /* ============================================================
    LIGHT MODE SMART CSS OVERRIDES
-   Ensures complete, gorgeous light theme across all pages & roles
+   Ensures complete, high-contrast, premium light aesthetic
    ============================================================ */
 
 .light {
@@ -63,14 +63,14 @@ body {
   color: #0f172a !important;
 }
 
-/* Cards & Surface Backgrounds */
+/* Surface Backgrounds */
 .light .bg-slate-950 {
   background-color: #ffffff !important;
   color: #0f172a;
 }
 
 .light .bg-slate-900 {
-  background-color: #f8fafc !important;
+  background-color: #ffffff !important;
   color: #0f172a;
 }
 
@@ -78,20 +78,57 @@ body {
 .light .bg-slate-900\/80,
 .light .bg-slate-900\/40,
 .light .bg-slate-900\/90 {
-  background-color: #f1f5f9 !important;
+  background-color: #f8fafc !important;
 }
 
 .light .bg-slate-950\/60,
 .light .bg-slate-950\/80,
 .light .bg-slate-950\/90,
 .light .bg-slate-950\/40 {
-  background-color: rgba(248, 250, 252, 0.85) !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Secondary & Action Buttons (Import, Export, Filters, Secondary Actions) */
+.light .bg-slate-800,
+.light .bg-slate-850,
+.light .bg-slate-700,
+.light .bg-slate-800\/80,
+.light .bg-slate-800\/60,
+.light .bg-slate-800\/50,
+.light .bg-slate-950\/80 button {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.light .bg-slate-800:hover,
+.light .bg-slate-850:hover,
+.light .bg-slate-700:hover,
+.light .hover\:bg-slate-800:hover,
+.light .hover\:bg-slate-700:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+/* Course badges & code pill tags */
+.light td .bg-slate-800,
+.light td .bg-slate-900,
+.light .font-mono.bg-slate-800 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
 }
 
 /* Borders */
 .light .border-slate-800,
 .light .border-slate-800\/80,
 .light .border-slate-800\/60,
+.light .border-slate-800\/50,
+.light .border-slate-700,
+.light .border-slate-700\/50,
+.light .border-slate-600,
 .light .border-slate-900,
 .light .border-slate-950 {
   border-color: #e2e8f0 !important;
@@ -104,7 +141,7 @@ body {
 
 .light .text-slate-100,
 .light .text-slate-200 {
-  color: #1e293b !important;
+  color: #0f172a !important;
 }
 
 .light .text-slate-300 {
@@ -117,6 +154,31 @@ body {
 
 .light .text-slate-500 {
   color: #64748b !important;
+}
+
+/* WCAG AAA High-Contrast Accent Text in Light Mode */
+.light .text-blue-400 {
+  color: #2563eb !important;
+}
+
+.light .text-emerald-400 {
+  color: #059669 !important;
+}
+
+.light .text-purple-400 {
+  color: #7c3aed !important;
+}
+
+.light .text-amber-400 {
+  color: #d97706 !important;
+}
+
+.light .text-rose-400 {
+  color: #e11d48 !important;
+}
+
+.light .text-indigo-400 {
+  color: #4f46e5 !important;
 }
 
 /* Form Inputs, Selects & Textareas */
@@ -144,6 +206,7 @@ body {
 /* Table Hover & Dividing Lines */
 .light .hover\:bg-slate-800:hover,
 .light .hover\:bg-slate-900:hover,
+.light .hover\:bg-slate-800\/40:hover,
 .light .hover\:bg-slate-950\/40:hover,
 .light .hover\:bg-slate-950\/80:hover {
   background-color: #f1f5f9 !important;
@@ -154,26 +217,29 @@ body {
   border-color: #e2e8f0 !important;
 }
 
-/* Buttons with Solid Colored Backgrounds (Always keep high contrast white text) */
+/* Primary Buttons with Solid Colored Backgrounds (ALWAYS KEEP CRISP WHITE TEXT) */
 .light .bg-blue-600,
-.light .bg-indigo-600,
-.light .bg-purple-600,
-.light .bg-rose-600,
-.light .bg-emerald-600,
-.light .bg-amber-600,
+.light .bg-blue-600 *,
 .light .bg-blue-500,
+.light .bg-blue-500 *,
+.light .bg-indigo-600,
+.light .bg-indigo-600 *,
 .light .bg-indigo-500,
+.light .bg-indigo-500 *,
+.light .bg-purple-600,
+.light .bg-purple-600 *,
 .light .bg-purple-500,
+.light .bg-purple-500 *,
+.light .bg-rose-600,
+.light .bg-rose-600 *,
 .light .bg-rose-500,
-.light .bg-emerald-500 {
-  color: #ffffff !important;
-}
-
-.light .bg-blue-600 .text-white,
-.light .bg-indigo-600 .text-white,
-.light .bg-purple-600 .text-white,
-.light .bg-rose-600 .text-white,
-.light .bg-emerald-600 .text-white {
+.light .bg-rose-500 *,
+.light .bg-emerald-600,
+.light .bg-emerald-600 *,
+.light .bg-emerald-500,
+.light .bg-emerald-500 *,
+.light .bg-amber-600,
+.light .bg-amber-600 * {
   color: #ffffff !important;
 }
 

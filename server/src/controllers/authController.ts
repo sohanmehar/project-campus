@@ -1,7 +1,11 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User';
 import { generateToken, setAuthCookie, clearAuthCookie } from '../utils/auth';
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID || '515653461626-dgkupvnr6tr6jg44p2affmfi1nrjt8us.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(googleClientId);
 
 interface AuthRequest extends Request {
   user?: {
@@ -112,6 +116,9 @@ export const login = async (req: Request, res: Response) => {
 
     // Verify password for non-demo users
     if (!demoAccounts[trimmedEmail]) {
+      if (!user.passwordHash) {
+        return res.status(401).json({ message: 'This account uses Google Sign-In. Please sign in with Google.' });
+      }
       const isMatch = await bcrypt.compare(password, user.passwordHash);
       if (!isMatch) {
         return res.status(401).json({ message: 'Invalid email or password.' });
@@ -136,6 +143,96 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     return res.status(500).json({ message: 'Server error during login', error: error.message });
+  }
+};
+
+// @desc    Authenticate user with Google OAuth Token
+// @route   POST /api/v1/auth/google
+// @access  Public
+export const googleLogin = async (req: Request, res: Response) => {
+  try {
+    const { credential, demoUser } = req.body;
+
+    let email = '';
+    let name = '';
+    let avatarUrl = '';
+    let googleId = '';
+
+    if (credential) {
+      // Real Google OAuth verification
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: googleClientId,
+      });
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) {
+        return res.status(400).json({ message: 'Invalid Google authentication token payload.' });
+      }
+      email = payload.email.toLowerCase().trim();
+      name = payload.name || payload.email.split('@')[0];
+      avatarUrl = payload.picture || '';
+      googleId = payload.sub;
+    } else if (demoUser) {
+      // Demo / Fast-Pass Google Login
+      email = (demoUser.email || 'alex.student@campusgpt.edu').toLowerCase().trim();
+      name = demoUser.name || 'Alex Mercer';
+      avatarUrl = demoUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+      googleId = 'google-demo-' + Date.now();
+    } else {
+      return res.status(400).json({ message: 'Google credential token is required.' });
+    }
+
+    // Lookup user in MongoDB Atlas
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Provision a new student account automatically
+      user = new User({
+        name,
+        email,
+        googleId,
+        authProvider: 'google',
+        role: 'student',
+        department: 'Computer Science',
+        avatarUrl,
+        isVerified: true,
+        studentDetails: {
+          rollNumber: `CS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+          semester: 1,
+          cgpa: 8.5,
+          skills: ['Web Development', 'Problem Solving'],
+          bio: 'Student at CampusGPT University.',
+        },
+      });
+      await user.save();
+    } else {
+      // Link Google ID and update avatar if not set
+      if (!user.googleId) user.googleId = googleId;
+      if (!user.avatarUrl && avatarUrl) user.avatarUrl = avatarUrl;
+      await user.save();
+    }
+
+    const token = generateToken(user);
+    setAuthCookie(res, token);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Google authentication successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        avatarUrl: user.avatarUrl,
+        studentDetails: user.studentDetails,
+        facultyDetails: user.facultyDetails,
+      },
+    });
+  } catch (error: any) {
+    console.error('Google Auth Error:', error);
+    return res.status(401).json({ message: 'Google verification failed: ' + error.message });
   }
 };
 
