@@ -68,44 +68,44 @@ export const FacultyDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
         <div>
           <span className="micro-label text-blue-400">Faculty Ecosystem</span>
-          <h1 className="text-2xl font-bold text-white tracking-tight mt-0.5">Professor Control Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-0.5">Professor Control Dashboard</h1>
         </div>
-        <div className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold rounded-full flex items-center">
+        <div className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold rounded-full flex items-center self-start sm:self-auto">
           <CheckCircle className="w-3.5 h-3.5 mr-1" /> Active Teaching Roster
         </div>
       </div>
 
       {/* Top PS Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="stitch-card p-4 bg-slate-900 border-slate-800 space-y-2">
-          <span className="micro-label text-slate-400">Enrolled Student Count</span>
-          <div className="text-2xl font-bold text-white">{metrics?.totalStudents || 120}</div>
-          <span className="text-[11px] text-emerald-400 font-semibold flex items-center">
-            <TrendingUp className="w-3 h-3 mr-1" /> Department: {metrics?.department || 'Computer Science'}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="stitch-card p-3.5 sm:p-4 bg-slate-900 border-slate-800 space-y-1.5 rounded-2xl">
+          <span className="micro-label text-slate-400">Enrolled Students</span>
+          <div className="text-xl sm:text-2xl font-bold text-white font-mono">{metrics?.totalStudents || 120}</div>
+          <span className="text-[10px] sm:text-[11px] text-emerald-400 font-semibold flex items-center truncate">
+            <TrendingUp className="w-3 h-3 mr-1 shrink-0" /> {metrics?.department || 'Computer Science'}
           </span>
         </div>
 
-        <div className="stitch-card p-4 bg-slate-900 border-slate-800 space-y-2">
-          <span className="micro-label text-slate-400">Assigned Classes & Subjects</span>
-          <div className="text-2xl font-bold text-white">4 Modules</div>
-          <span className="text-[11px] text-blue-400 font-semibold">Active Semester Lectures</span>
+        <div className="stitch-card p-3.5 sm:p-4 bg-slate-900 border-slate-800 space-y-1.5 rounded-2xl">
+          <span className="micro-label text-slate-400">Assigned Modules</span>
+          <div className="text-xl sm:text-2xl font-bold text-white font-mono">4 Modules</div>
+          <span className="text-[10px] sm:text-[11px] text-blue-400 font-semibold truncate">Active Lectures</span>
         </div>
 
-        <div className="stitch-card p-4 bg-slate-900 border-slate-800 space-y-2">
-          <span className="micro-label text-slate-400">Pending Student Submissions</span>
-          <div className="text-2xl font-bold text-amber-400">{metrics?.pendingSubmissions || 2}</div>
-          <span className="text-[11px] text-amber-400 font-semibold">Requires Faculty Review</span>
+        <div className="stitch-card p-3.5 sm:p-4 bg-slate-900 border-slate-800 space-y-1.5 rounded-2xl">
+          <span className="micro-label text-slate-400">Pending Review</span>
+          <div className="text-xl sm:text-2xl font-bold text-amber-400 font-mono">{metrics?.pendingSubmissions || 2}</div>
+          <span className="text-[10px] sm:text-[11px] text-amber-400 font-semibold truncate">Requires Evaluation</span>
         </div>
 
-        <div className="stitch-card p-4 bg-slate-900 border-slate-800 space-y-2">
-          <span className="micro-label text-slate-400">Attendance Sessions Conducted</span>
-          <div className="text-2xl font-bold text-white">{metrics?.totalAttendanceSessions || 14}</div>
-          <span className="text-[11px] text-emerald-400 font-semibold">Synced to Database</span>
+        <div className="stitch-card p-3.5 sm:p-4 bg-slate-900 border-slate-800 space-y-1.5 rounded-2xl">
+          <span className="micro-label text-slate-400">Sessions Logged</span>
+          <div className="text-xl sm:text-2xl font-bold text-white font-mono">{metrics?.totalAttendanceSessions || 14}</div>
+          <span className="text-[10px] sm:text-[11px] text-emerald-400 font-semibold truncate">MongoDB Synced</span>
         </div>
       </div>
 

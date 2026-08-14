@@ -69,7 +69,15 @@ export const SettingsView: React.FC = () => {
           resumeUrl: u.studentDetails?.resumeUrl ?? prev.resumeUrl,
         }));
       }
-      addToast('success', 'Profile Saved', 'Your student details were updated directly in MongoDB Atlas.');
+      const saveMsg = isStudent
+        ? 'Your student details were updated directly in MongoDB Atlas.'
+        : isCoordinator
+        ? 'Your coordinator profile was updated directly in MongoDB Atlas.'
+        : isFaculty
+        ? 'Your faculty profile was updated directly in MongoDB Atlas.'
+        : 'Your profile details were updated directly in MongoDB Atlas.';
+
+      addToast('success', 'Profile Saved', saveMsg);
     } catch (err: any) {
       addToast('error', 'Update Error', err.response?.data?.message || 'Could not save profile details.');
     } finally {
@@ -313,7 +321,17 @@ export const SettingsView: React.FC = () => {
             className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl flex items-center justify-center space-x-2 transition shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer text-xs"
           >
             <Save className="w-4 h-4" />
-            <span>{saving ? 'Saving Changes...' : 'Save Student Details'}</span>
+            <span>
+              {saving
+                ? 'Saving Changes...'
+                : isStudent
+                ? 'Save Student Details'
+                : isCoordinator
+                ? 'Save Coordinator Profile'
+                : isFaculty
+                ? 'Save Faculty Profile'
+                : 'Save Profile Details'}
+            </span>
           </button>
         </div>
       </form>

@@ -83,19 +83,19 @@ export const AdminPlacementsView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-6">
       {/* Title Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
         <div>
           <span className="micro-label text-blue-400">Career & Placements Portal</span>
-          <h1 className="text-2xl font-bold text-white tracking-tight mt-0.5">Placement Drive Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-0.5">Corporate Placement Drives</h1>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition shadow-lg shadow-blue-600/20 cursor-pointer"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-600/20 active:scale-95 cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Post New Drive</span>
+          <span>Publish Recruitment Drive</span>
         </button>
       </div>
 
