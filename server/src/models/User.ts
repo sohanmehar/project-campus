@@ -52,7 +52,7 @@ const UserSchema: Schema = new Schema(
     department: { type: String, required: true, default: 'Computer Science' },
     phone: { type: String, default: '' },
     avatarUrl: { type: String, default: '' },
-    isVerified: { type: Boolean, default: true }, // Simplified email verification for hackathon demo
+    isVerified: { type: Boolean, default: true },
     studentDetails: {
       rollNumber: { type: String, sparse: true },
       phone: { type: String, default: '' },

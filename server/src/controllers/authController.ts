@@ -385,7 +385,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: `Password reset OTP generated. A 6-digit verification code was sent to ${email}.`,
-      otp, // Included for hackathon evaluator convenience
+      otp,
     });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error initiating password reset', error: error.message });

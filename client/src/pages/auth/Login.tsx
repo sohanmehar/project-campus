@@ -174,7 +174,7 @@ export const Login: React.FC = () => {
                   d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
                 />
               </svg>
-              <span>1-Click Google Fast Pass (Evaluator Demo)</span>
+              <span>1-Click Google Fast Pass (Demo Mode)</span>
             </button>
           </div>
 
@@ -243,7 +243,7 @@ export const Login: React.FC = () => {
           {/* Quick Login Switcher */}
           <div className="pt-3 border-t border-slate-800 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="micro-label text-slate-500">Hackathon Demo Switcher</span>
+              <span className="micro-label text-slate-500">Quick Role Switcher (Test Accounts)</span>
               <Shield className="w-3.5 h-3.5 text-blue-400" />
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
