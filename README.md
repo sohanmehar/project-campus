@@ -7,7 +7,7 @@
 [![Backend Engine (Render)](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render)](https://campusgpt-backend-oscx.onrender.com)
 [![Database (MongoDB Atlas)](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?logo=mongodb)](https://mongodb.com)
 [![AI Engine (CampusGPT Copilot)](https://img.shields.io/badge/AI%20Copilot-Context--Aware%20Engine-4285F4?logo=probot)](README.md)
-[![API Documentation](https://img.shields.io/badge/API%20Docs-REST%20PDF%20%2B%20Markdown-blue)](file:///docs/CampusGPT_API_Documentation.pdf)
+[![API Documentation](https://img.shields.io/badge/API%20Docs-REST%20PDF%20%2B%20Markdown-blue)](docs/CampusGPT_API_Documentation.pdf)
 
 ---
 
@@ -17,7 +17,7 @@
 | :--- | :--- | :--- |
 | **Frontend Web App** | [https://campus-grid-phi-nine.vercel.app](https://campus-grid-phi-nine.vercel.app) | 🟢 Live (Vercel) |
 | **REST API Server** | [https://campusgpt-backend-oscx.onrender.com/api/v1/health](https://campusgpt-backend-oscx.onrender.com/api/v1/health) | 🟢 Live (Render) |
-| **API PDF Documentation** | [`docs/CampusGPT_API_Documentation.pdf`](file:///docs/CampusGPT_API_Documentation.pdf) | 📄 Complete Spec |
+| **API PDF Documentation** | [`docs/CampusGPT_API_Documentation.pdf`](docs/CampusGPT_API_Documentation.pdf) | 📄 Complete Spec |
 
 ---
 
@@ -279,7 +279,7 @@ docker-compose up --build
 ## 📄 API Documentation
 
 Complete REST API specification:
-1. **Printable PDF**: [`docs/CampusGPT_API_Documentation.pdf`](file:///docs/CampusGPT_API_Documentation.pdf)
+1. **Printable PDF**: [`docs/CampusGPT_API_Documentation.pdf`](docs/CampusGPT_API_Documentation.pdf)
 
 ---
 
