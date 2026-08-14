@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
@@ -22,6 +22,22 @@ export const SettingsView: React.FC = () => {
   const { theme, setTheme } = useThemeStore();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'connected'>('profile');
+  const [dbDepartments, setDbDepartments] = useState<Array<{ name: string; code?: string }>>([]);
+
+  // Fetch real academic departments from MongoDB Atlas
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await axios.get('/admin/departments');
+        if (res.data?.departments && Array.isArray(res.data.departments) && res.data.departments.length > 0) {
+          setDbDepartments(res.data.departments);
+        }
+      } catch (err) {
+        console.error('Error loading departments:', err);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   // Profile Form State
   const [formData, setFormData] = useState({
@@ -29,7 +45,7 @@ export const SettingsView: React.FC = () => {
     email: user?.email || '',
     phone: user?.studentDetails?.phone || user?.phone || '',
     rollNumber: user?.studentDetails?.rollNumber || 'CS-2024-042',
-    department: user?.department || 'Computer Science',
+    department: user?.department || 'Computer Science & Engineering',
     currentSemester: user?.studentDetails?.currentSemester || user?.studentDetails?.semester || 4,
     bio: user?.studentDetails?.bio || 'Student at CampusGPT University.',
     skills: Array.isArray(user?.studentDetails?.skills)
@@ -318,13 +334,13 @@ export const SettingsView: React.FC = () => {
                     const newDept = e.target.value;
                     setFormData((prev) => {
                       let newRoll = prev.rollNumber;
-                      if (newDept.includes('ENTC') || newDept.includes('Electronics')) {
+                      if (newDept.toLowerCase().includes('entc') || newDept.toLowerCase().includes('electronics')) {
                         newRoll = newRoll.replace(/^[A-Z]+-/, 'ENTC-');
-                      } else if (newDept.includes('Computer')) {
+                      } else if (newDept.toLowerCase().includes('computer')) {
                         newRoll = newRoll.replace(/^[A-Z]+-/, 'CS-');
-                      } else if (newDept.includes('Information')) {
+                      } else if (newDept.toLowerCase().includes('information')) {
                         newRoll = newRoll.replace(/^[A-Z]+-/, 'IT-');
-                      } else if (newDept.includes('Mechanical')) {
+                      } else if (newDept.toLowerCase().includes('mechanical')) {
                         newRoll = newRoll.replace(/^[A-Z]+-/, 'MECH-');
                       }
                       return { ...prev, department: newDept, rollNumber: newRoll };
@@ -332,14 +348,33 @@ export const SettingsView: React.FC = () => {
                   }}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-medium cursor-pointer"
                 >
-                  <option value="Electronics & Telecommunication (ENTC)">Electronics & Telecommunication (ENTC)</option>
-                  <option value="Computer Science">Computer Science & Engineering</option>
-                  <option value="Information Technology">Information Technology</option>
-                  <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
-                  <option value="Electrical & Electronics Engineering">Electrical & Electronics Engineering</option>
-                  <option value="Mechanical Engineering">Mechanical Engineering</option>
-                  <option value="Civil Engineering">Civil Engineering</option>
-                  <option value="Biotechnology">Biotechnology</option>
+                  {(() => {
+                    const list = dbDepartments.length > 0
+                      ? dbDepartments
+                      : [
+                          { name: 'Computer Science & Engineering', code: 'CSE' },
+                          { name: 'Electronics & Telecommunication', code: 'E&TC' }
+                        ];
+
+                    const hasMatch = list.some(
+                      (d) =>
+                        d.name.toLowerCase() === formData.department.toLowerCase() ||
+                        (d.code && formData.department.toLowerCase().includes(d.code.toLowerCase()))
+                    );
+
+                    return (
+                      <>
+                        {!hasMatch && formData.department && (
+                          <option value={formData.department}>{formData.department}</option>
+                        )}
+                        {list.map((dept) => (
+                          <option key={dept.name} value={dept.name}>
+                            {dept.name} {dept.code ? `(${dept.code})` : ''}
+                          </option>
+                        ))}
+                      </>
+                    );
+                  })()}
                 </select>
               </div>
             </div>

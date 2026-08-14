@@ -31,7 +31,7 @@ router.use(authenticateToken);
 
 // Public search & Department catalog read
 router.get('/search', globalSearch);
-router.get('/departments', requireRole(['admin', 'faculty', 'student']), getDepartments);
+router.get('/departments', requireRole(['admin', 'faculty', 'student', 'coordinator']), getDepartments);
 
 // Restricted Administrative Mutations
 router.use(requireRole(['admin']));

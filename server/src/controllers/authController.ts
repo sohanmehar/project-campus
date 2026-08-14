@@ -38,7 +38,7 @@ export const signup = async (req: Request, res: Response) => {
       email,
       passwordHash,
       role: role || 'student',
-      department: department || 'Computer Science',
+      department: department || 'Computer Science & Engineering',
       studentDetails: role === 'student' ? { rollNumber: rollNumber || `STU-${Date.now().toString().slice(-4)}` } : undefined,
     });
 
@@ -193,7 +193,7 @@ export const googleLogin = async (req: Request, res: Response) => {
         googleId,
         authProvider: 'google',
         role: 'student',
-        department: 'Computer Science',
+        department: 'Computer Science & Engineering',
         avatarUrl,
         isVerified: true,
         studentDetails: {
