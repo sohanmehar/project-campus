@@ -89,6 +89,7 @@ export const ClubsView: React.FC = () => {
   });
 
   const myClubsCount = clubs.filter((c) => c.isMember).length;
+  const myPendingCount = clubs.filter((c) => c.isPending).length;
   const totalCampusMembers = clubs.reduce((sum, c) => sum + (c.memberCount || 0), 0);
 
   if (loading) {
@@ -114,7 +115,9 @@ export const ClubsView: React.FC = () => {
             {clubs.length} Registered Societies
           </span>
           <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-            {isStaff ? `${totalCampusMembers} Enrolled Members` : `${myClubsCount} Active Memberships`}
+            {isStaff
+              ? `${totalCampusMembers} Enrolled Members`
+              : `${myClubsCount} Active Memberships${myPendingCount > 0 ? ` • ${myPendingCount} Pending` : ''}`}
           </span>
         </div>
       </div>
@@ -209,7 +212,7 @@ export const ClubsView: React.FC = () => {
                 ) : club.isPending ? (
                   <div className="flex items-center space-x-1.5 text-amber-400 text-xs font-semibold">
                     <Clock className="w-4 h-4" />
-                    <span>Pending Approval</span>
+                    <span>Pending Coordinator Review</span>
                   </div>
                 ) : (
                   <span className="text-[11px] text-slate-500 font-mono">Open Membership</span>
@@ -222,14 +225,14 @@ export const ClubsView: React.FC = () => {
                     club.isMember
                       ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20'
                       : club.isPending
-                      ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20'
+                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
                       : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
                   }`}
                 >
                   {club.isMember ? (
                     <span>Leave</span>
                   ) : club.isPending ? (
-                    <span>Cancel Request</span>
+                    <span className="text-amber-400">Cancel Application</span>
                   ) : (
                     <>
                       <UserPlus className="w-3.5 h-3.5" />
