@@ -287,7 +287,8 @@ Complete REST API specification:
 
 | Team Member | Role | Responsibilities |
 | :--- | :--- | :--- |
-| **Sohan Mehar** | **Full-Stack Engineer & Architect** | Core Architecture, 4 Role Portals, Google OAuth 2.0, Multi-Tenant CampusGPT Copilot, Live Attendance Engine, MongoDB Atlas Integration & Deployment |
+| **Sohan Mehar** | **Lead Full-Stack Engineer & Architect** | System Architecture, Express REST API Server, Google OAuth 2.0 & JWT/RBAC Auth Layer, Multi-Tenant CampusGPT AI Copilot, Live Attendance & QR Engine, Database Schemas, MongoDB Atlas & Cloud Deployment (Vercel & Render) |
+| **Suchitra Karde** | **Full-Stack Developer & UI/UX Specialist** | 4 Role Portal Frontend Interfaces (Student, Faculty, Coordinator, Admin), Assignment Submission & Evaluation Module, Event Management & QR Ticket Pass System, Placement & Career Hub, Responsive Design System & Client-Side State Management |
 
 ---
 
