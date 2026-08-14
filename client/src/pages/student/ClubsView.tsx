@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export const ClubsView: React.FC = () => {
-  useAuthStore();
+  const { user } = useAuthStore();
   const { addToast } = useToastStore();
 
   const [clubs, setClubs] = useState<any[]>([]);
@@ -21,6 +21,8 @@ export const ClubsView: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const isStaff = user?.role === 'coordinator' || user?.role === 'admin' || user?.role === 'faculty';
 
   const fetchClubs = async () => {
     try {
@@ -47,15 +49,23 @@ export const ClubsView: React.FC = () => {
         addToast('info', 'Club Membership', `You left ${club.name}.`);
         setClubs((prev) =>
           prev.map((c) =>
-            c._id === club._id ? { ...c, isMember: false, memberCount: Math.max(0, c.memberCount - 1) } : c
+            c._id === club._id ? { ...c, isMember: false, isPending: false, memberCount: Math.max(0, c.memberCount - 1) } : c
+          )
+        );
+      } else if (club.isPending) {
+        await axios.delete(`/clubs/${club._id}/leave`);
+        addToast('info', 'Application Cancelled', `Cancelled membership application for ${club.name}.`);
+        setClubs((prev) =>
+          prev.map((c) =>
+            c._id === club._id ? { ...c, isPending: false } : c
           )
         );
       } else {
         await axios.post(`/clubs/${club._id}/join`);
-        addToast('success', 'Joined Club!', `You are now a registered member of ${club.name}!`);
+        addToast('success', 'Application Submitted! 🎉', `Your application for ${club.name} was sent to Coordinator Marcus Vance for approval.`);
         setClubs((prev) =>
           prev.map((c) =>
-            c._id === club._id ? { ...c, isMember: true, memberCount: (c.memberCount || 0) + 1 } : c
+            c._id === club._id ? { ...c, isPending: true } : c
           )
         );
       }
@@ -79,6 +89,7 @@ export const ClubsView: React.FC = () => {
   });
 
   const myClubsCount = clubs.filter((c) => c.isMember).length;
+  const totalCampusMembers = clubs.reduce((sum, c) => sum + (c.memberCount || 0), 0);
 
   if (loading) {
     return (
@@ -103,7 +114,7 @@ export const ClubsView: React.FC = () => {
             {clubs.length} Registered Societies
           </span>
           <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-            {myClubsCount} Active Memberships
+            {isStaff ? `${totalCampusMembers} Enrolled Members` : `${myClubsCount} Active Memberships`}
           </span>
         </div>
       </div>
@@ -195,6 +206,11 @@ export const ClubsView: React.FC = () => {
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Registered Member</span>
                   </div>
+                ) : club.isPending ? (
+                  <div className="flex items-center space-x-1.5 text-amber-400 text-xs font-semibold">
+                    <Clock className="w-4 h-4" />
+                    <span>Pending Approval</span>
+                  </div>
                 ) : (
                   <span className="text-[11px] text-slate-500 font-mono">Open Membership</span>
                 )}
@@ -205,11 +221,15 @@ export const ClubsView: React.FC = () => {
                   className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50 ${
                     club.isMember
                       ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20'
+                      : club.isPending
+                      ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20'
                       : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
                   }`}
                 >
                   {club.isMember ? (
                     <span>Leave</span>
+                  ) : club.isPending ? (
+                    <span>Cancel Request</span>
                   ) : (
                     <>
                       <UserPlus className="w-3.5 h-3.5" />

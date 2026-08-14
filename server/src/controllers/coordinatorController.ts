@@ -13,13 +13,10 @@ import { AuthRequest } from '../middleware/authMiddleware';
 // @access  Private (Coordinator/Admin)
 export const getCoordinatorStats = async (req: AuthRequest, res: Response) => {
   try {
-    // 1. Ensure initial activity approval requests exist for real students if pending queue is empty
-    const existingApprovalsCount = await ActivityApproval.countDocuments({ status: 'pending' });
-    if (existingApprovalsCount === 0) {
-      let realStudents = await User.find({ role: 'student' }).limit(4);
-      if (realStudents.length === 0) {
-        realStudents = await User.find().limit(4);
-      }
+    // 1. Only seed if the collection has never been initialized at all
+    const totalApprovalsCount = await ActivityApproval.countDocuments();
+    if (totalApprovalsCount === 0) {
+      let realStudents = await User.find({ role: 'student' }).limit(3);
       if (realStudents.length > 0) {
         const seedRequests = realStudents.map((stu: any, idx) => ({
           studentId: stu._id,
@@ -64,11 +61,12 @@ export const getCoordinatorStats = async (req: AuthRequest, res: Response) => {
       };
     });
 
-    // Club membership category breakdown
+    // Club membership category breakdown strictly from real MongoDB members
     const categoryMap: Record<string, number> = {};
     clubs.forEach((c) => {
       const cat = c.category || 'Other';
-      categoryMap[cat] = (categoryMap[cat] || 0) + (c.memberCount || 0);
+      const count = c.members ? c.members.length : 0;
+      categoryMap[cat] = (categoryMap[cat] || 0) + count;
     });
 
     const clubCategoryBreakdown = Object.entries(categoryMap).map(([name, count]) => ({
@@ -113,6 +111,28 @@ export const decideActivityApproval = async (req: AuthRequest, res: Response) =>
     approval.status = action === 'approve' ? 'approved' : 'declined';
     approval.decidedAt = new Date();
     await approval.save();
+
+    // If this was a Club application, update the Club document
+    try {
+      const club = await Club.findOne({ name: approval.targetName });
+      if (club) {
+        if (action === 'approve') {
+          if (!club.members) club.members = [];
+          if (!club.members.some((m) => m.toString() === approval.studentId.toString())) {
+            club.members.push(approval.studentId);
+            club.memberCount = (club.memberCount || 0) + 1;
+          }
+        }
+        if (club.pendingApplicants) {
+          club.pendingApplicants = club.pendingApplicants.filter(
+            (m) => m.toString() !== approval.studentId.toString()
+          );
+        }
+        await club.save();
+      }
+    } catch (cErr) {
+      console.warn('Could not sync club status on decision:', cErr);
+    }
 
     // Send real notification directly to the Student
     const isApproved = action === 'approve';

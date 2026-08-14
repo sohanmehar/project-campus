@@ -23,8 +23,9 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
           leadEmail: 'gdsc.lead@campusgpt.edu',
           meetingSchedule: 'Tuesdays & Thursdays at 5:00 PM',
           roomLocation: 'Computing Lab 4, Block A',
-          memberCount: 142,
+          memberCount: 0,
           members: [],
+          pendingApplicants: [],
         },
         {
           name: 'Robotics & Automation Society (RAS)',
@@ -34,8 +35,9 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
           leadEmail: 'robotics@campusgpt.edu',
           meetingSchedule: 'Wednesdays at 4:30 PM',
           roomLocation: 'Mechatronics Workshop 1',
-          memberCount: 88,
+          memberCount: 0,
           members: [],
+          pendingApplicants: [],
         },
         {
           name: 'CSI Student Chapter',
@@ -45,8 +47,9 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
           leadEmail: 'csi@campusgpt.edu',
           meetingSchedule: 'Fridays at 3:30 PM',
           roomLocation: 'Seminar Hall 2',
-          memberCount: 110,
+          memberCount: 0,
           members: [],
+          pendingApplicants: [],
         },
         {
           name: 'AI & Machine Learning Research Cell',
@@ -56,8 +59,9 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
           leadEmail: 'ai.research@campusgpt.edu',
           meetingSchedule: 'Mondays at 4:00 PM',
           roomLocation: 'AI Innovation Hub, Block C',
-          memberCount: 95,
+          memberCount: 0,
           members: [],
+          pendingApplicants: [],
         },
         {
           name: 'Campus Cultural & Arts Society',
@@ -67,8 +71,9 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
           leadEmail: 'cultural@campusgpt.edu',
           meetingSchedule: 'Saturdays at 2:00 PM',
           roomLocation: 'Main Auditorium Stage',
-          memberCount: 160,
+          memberCount: 0,
           members: [],
+          pendingApplicants: [],
         },
         {
           name: 'Rotaract Youth Club',
@@ -78,8 +83,9 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
           leadEmail: 'rotaract@campusgpt.edu',
           meetingSchedule: 'Sundays at 11:00 AM',
           roomLocation: 'SAC Meeting Room 1',
-          memberCount: 74,
+          memberCount: 0,
           members: [],
+          pendingApplicants: [],
         },
       ];
       clubs = (await Club.insertMany(defaultClubs as any)) as any;
@@ -90,6 +96,13 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
         ? club.members?.some((m) => m.toString() === studentId.toString())
         : false;
 
+      const isPending = studentId
+        ? club.pendingApplicants?.some((m) => m.toString() === studentId.toString())
+        : false;
+
+      // Real member count strictly from actual database members
+      const realMemberCount = club.members ? club.members.length : 0;
+
       return {
         _id: club._id,
         name: club.name,
@@ -99,8 +112,9 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
         leadEmail: club.leadEmail,
         meetingSchedule: club.meetingSchedule,
         roomLocation: club.roomLocation,
-        memberCount: Math.max(club.memberCount || 0, club.members?.length || 0),
+        memberCount: realMemberCount,
         isMember: !!isMember,
+        isPending: !!isPending,
       };
     });
 
@@ -110,7 +124,7 @@ export const getClubs = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// @desc    Join club membership
+// @desc    Apply for club membership (routes to Coordinator approval queue)
 // @route   POST /api/v1/clubs/:id/join
 // @access  Private (Student)
 export const joinClub = async (req: AuthRequest, res: Response) => {
@@ -134,8 +148,16 @@ export const joinClub = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: `You are already a registered member of ${club.name}.` });
     }
 
-    club.members.push(userObjId);
-    club.memberCount = (club.memberCount || 0) + 1;
+    if (!club.pendingApplicants) {
+      club.pendingApplicants = [];
+    }
+
+    const alreadyPending = club.pendingApplicants.some((m) => m.toString() === userObjId.toString());
+    if (alreadyPending) {
+      return res.status(400).json({ message: `Your application for ${club.name} is already pending Coordinator review.` });
+    }
+
+    club.pendingApplicants.push(userObjId);
     await club.save();
 
     // Create an ActivityApproval record in MongoDB for the Coordinator Action Queue
@@ -157,12 +179,13 @@ export const joinClub = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      message: `Successfully joined ${club.name}!`,
+      message: `Membership application submitted for ${club.name}! Pending Coordinator approval.`,
       club: {
         _id: club._id,
         name: club.name,
         memberCount: club.memberCount,
-        isMember: true,
+        isMember: false,
+        isPending: true,
       },
     });
   } catch (error: any) {
@@ -187,9 +210,25 @@ export const leaveClub = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Club not found.' });
     }
 
-    club.members = club.members.filter((m) => m.toString() !== studentId.toString());
-    club.memberCount = Math.max(0, (club.memberCount || 1) - 1);
+    const wasMember = club.members?.some((m) => m.toString() === studentId.toString());
+    club.members = (club.members || []).filter((m) => m.toString() !== studentId.toString());
+    club.pendingApplicants = (club.pendingApplicants || []).filter((m) => m.toString() !== studentId.toString());
+    
+    if (wasMember) {
+      club.memberCount = Math.max(0, (club.memberCount || 1) - 1);
+    }
     await club.save();
+
+    // Cancel any pending approval in MongoDB
+    try {
+      await ActivityApproval.deleteMany({
+        studentId: new mongoose.Types.ObjectId(studentId),
+        targetName: club.name,
+        status: 'pending',
+      });
+    } catch (dErr) {
+      // Ignore
+    }
 
     return res.status(200).json({
       success: true,
@@ -199,6 +238,7 @@ export const leaveClub = async (req: AuthRequest, res: Response) => {
         name: club.name,
         memberCount: club.memberCount,
         isMember: false,
+        isPending: false,
       },
     });
   } catch (error: any) {

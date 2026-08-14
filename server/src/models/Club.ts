@@ -10,6 +10,7 @@ export interface IClub extends Document {
   roomLocation: string;
   memberCount: number;
   members: mongoose.Types.ObjectId[];
+  pendingApplicants: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +30,7 @@ const ClubSchema: Schema = new Schema(
     roomLocation: { type: String, default: 'Student Activity Center Lab 2' },
     memberCount: { type: Number, default: 0 },
     members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    pendingApplicants: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );
