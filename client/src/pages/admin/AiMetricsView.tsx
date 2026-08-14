@@ -38,7 +38,7 @@ export const AiMetricsView: React.FC = () => {
           <h1 className="text-2xl font-bold text-white tracking-tight mt-0.5">CampusGPT AI Platform Metrics</h1>
         </div>
         <div className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold rounded-full flex items-center">
-          <Sparkles className="w-3.5 h-3.5 mr-1" /> Gemini 1.5 Engine Connected
+          <Sparkles className="w-3.5 h-3.5 mr-1" /> CampusGPT AI Engine Connected
         </div>
       </div>
 

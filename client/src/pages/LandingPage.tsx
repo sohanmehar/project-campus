@@ -59,7 +59,7 @@ export const LandingPage: React.FC = () => {
   const statistics = [
     { number: '99.9%', label: 'Platform Uptime', sub: 'Production Cloud SLA' },
     { number: '1,200+', label: 'Active Students', sub: 'Synced in MongoDB Atlas' },
-    { number: '< 200ms', label: 'AI Response Latency', sub: 'Gemini & Groq Engine' },
+    { number: '< 200ms', label: 'AI Response Latency', sub: 'Context-Aware AI Engine' },
     { number: '100%', label: 'Paperless Campus', sub: 'Digital QR Passes & Grading' }
   ];
 
@@ -96,7 +96,7 @@ export const LandingPage: React.FC = () => {
     },
     {
       question: 'How does the CampusGPT AI Copilot work?',
-      answer: 'CampusGPT integrates a multi-tenant AI copilot powered by Gemini and Groq. It adapts context dynamically depending on the authenticated role (Academic tutor for students, lesson planner for faculty, event strategist for coordinators, and analytics engine for administrators).'
+      answer: 'CampusGPT integrates a multi-tenant context-aware AI copilot. It adapts context dynamically depending on the authenticated role (Academic tutor for students, lesson planner for faculty, event strategist for coordinators, and analytics engine for administrators).'
     },
     {
       question: 'Can colleges import their existing student and faculty databases?',
@@ -283,7 +283,7 @@ export const LandingPage: React.FC = () => {
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Integrated multi-agent intelligence powered by Gemini and Groq with full conversation persistence. Ask for syllabus explanations, draft exam questions, brainstorm club hackathons, or audit institutional metrics in real time.
+            Integrated multi-agent intelligence with full MongoDB conversation persistence. Ask for syllabus explanations, draft exam questions, brainstorm club hackathons, or audit institutional metrics in real time.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 text-left">

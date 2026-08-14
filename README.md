@@ -6,7 +6,7 @@
 [![Live Deployment (Vercel)](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)](https://campus-grid-phi-nine.vercel.app)
 [![Backend Engine (Render)](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render)](https://campusgpt-backend-oscx.onrender.com)
 [![Database (MongoDB Atlas)](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?logo=mongodb)](https://mongodb.com)
-[![AI Engine (Gemini & Groq)](https://img.shields.io/badge/AI%20Copilot-Gemini%20%2B%20Groq-4285F4?logo=google)](https://ai.google.dev)
+[![AI Engine (CampusGPT Copilot)](https://img.shields.io/badge/AI%20Copilot-Context--Aware%20Engine-4285F4?logo=probot)](README.md)
 [![API Documentation](https://img.shields.io/badge/API%20Docs-REST%20PDF%20%2B%20Markdown-blue)](file:///docs/CampusGPT_API_Documentation.pdf)
 
 ---
@@ -62,9 +62,9 @@ flowchart TD
         AICopilot["CampusGPT Multi-Tenant Engine"]
     end
 
-    subgraph Storage ["Cloud Infrastructure & AI Models"]
+    subgraph Storage ["Cloud Infrastructure & Data Layer"]
         MongoAtlas[("MongoDB Atlas Database")]
-        GeminiGroq["Google Gemini 1.5 & Groq Llama 3"]
+        AIChatStore[("Persistent AI Conversations")]
     end
 
     Client --> Security
@@ -241,8 +241,6 @@ PORT=5000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 GOOGLE_CLIENT_ID=515653461626-dgkupvnr6tr6jg44p2affmfi1nrjt8us.apps.googleusercontent.com
-GROQ_API_KEY=your_groq_api_key
-GEMINI_API_KEY=your_gemini_api_key
 CLIENT_URL=http://localhost:5173
 ```
 
