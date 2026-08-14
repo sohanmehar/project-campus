@@ -13,9 +13,36 @@ const BASE_URL = (rawApiUrl && rawApiUrl !== 'undefined' && rawApiUrl.startsWith
 axios.defaults.baseURL = BASE_URL.replace(/\/+$/, ''); // removes trailing slashes if any
 axios.defaults.withCredentials = true;
 
-// Attach Bearer token from localStorage to all outgoing requests
+// Token Storage Helpers (Prioritize sessionStorage for per-tab isolation, fallback to localStorage)
+const getStoredToken = (): string | null => {
+  try {
+    return sessionStorage.getItem('campusgpt_token') || localStorage.getItem('campusgpt_token');
+  } catch {
+    return null;
+  }
+};
+
+const setStoredToken = (token: string) => {
+  try {
+    sessionStorage.setItem('campusgpt_token', token);
+    localStorage.setItem('campusgpt_token', token);
+  } catch (e) {
+    console.error('Failed to save token to storage', e);
+  }
+};
+
+const removeStoredToken = () => {
+  try {
+    sessionStorage.removeItem('campusgpt_token');
+    localStorage.removeItem('campusgpt_token');
+  } catch (e) {
+    console.error('Failed to remove token from storage', e);
+  }
+};
+
+// Attach Bearer token from storage to all outgoing requests
 axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('campusgpt_token');
+  const token = getStoredToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -48,7 +75,7 @@ interface AuthState {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
@@ -64,7 +91,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = response.data?.token;
 
       if (token) {
-        localStorage.setItem('campusgpt_token', token);
+        setStoredToken(token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
@@ -100,7 +127,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = response.data?.token;
 
       if (token) {
-        localStorage.setItem('campusgpt_token', token);
+        setStoredToken(token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
@@ -136,7 +163,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = response.data?.token;
 
       if (token) {
-        localStorage.setItem('campusgpt_token', token);
+        setStoredToken(token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
@@ -170,21 +197,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err) {
       console.error('Logout error', err);
     } finally {
-      localStorage.removeItem('campusgpt_token');
+      removeStoredToken();
       delete axios.defaults.headers.common['Authorization'];
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
     }
   },
 
   checkAuth: async () => {
-    if (get().isAuthenticated && get().user) {
-      set({ isLoading: false });
+    const token = getStoredToken();
+    if (!token) {
+      set({ user: null, isAuthenticated: false, isLoading: false, error: null });
       return;
     }
 
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     set({ isLoading: true });
     try {
-      const response = await axios.get('/auth/me');
+      const response = await axios.get('/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (response.data?.user) {
         const rawUser = response.data.user;
         const user = {
@@ -198,11 +229,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           error: null,
         });
       } else {
-        localStorage.removeItem('campusgpt_token');
+        removeStoredToken();
         set({ user: null, isAuthenticated: false, isLoading: false, error: null });
       }
     } catch (err) {
-      localStorage.removeItem('campusgpt_token');
+      removeStoredToken();
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
     }
   },

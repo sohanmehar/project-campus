@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Sparkles, 
-  ArrowRight, 
-  CheckCircle2, 
-  Shield, 
-  BookOpen, 
-  Users, 
-  Bot, 
-  ChevronDown, 
-  ChevronUp, 
-  GraduationCap, 
-  Sun, 
-  Moon, 
-  Zap, 
-  Layers, 
-  Globe 
+import {
+  Sparkles,
+  ArrowRight,
+  CheckCircle2,
+  Shield,
+  BookOpen,
+  Users,
+  Bot,
+  ChevronDown,
+  ChevronUp,
+  GraduationCap,
+  Sun,
+  Moon,
+  Zap,
+  Layers,
+  Globe
 } from 'lucide-react';
 import { useThemeStore } from '../store/useThemeStore';
 import { useAuthStore } from '../store/useAuthStore';

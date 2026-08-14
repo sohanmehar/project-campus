@@ -11,7 +11,9 @@ export interface AuthRequest extends Request {
 }
 
 export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const token = bearerToken || req.cookies?.token;
 
   if (!token) {
     return res.status(401).json({ message: 'Access denied: No token provided' });
