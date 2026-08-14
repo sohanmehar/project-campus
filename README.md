@@ -21,6 +21,19 @@
 
 ---
 
+## 💻 Tech Stack
+
+| Domain | Technologies Used |
+| :--- | :--- |
+| **Frontend** | React 18, TypeScript, Tailwind CSS, Lucide React, Vite |
+| **Backend API** | Node.js, Express.js, TypeScript, RESTful Architecture |
+| **Database** | MongoDB Atlas Cloud, Mongoose ODM |
+| **Authentication & Security** | Google OAuth 2.0, JWT Tokens, HttpOnly Cookies, BCrypt.js, RBAC Middleware |
+| **DevOps & Cloud** | Vercel (Frontend), Render (Backend), Docker & Docker Compose |
+| **AI Layer** | CampusGPT Context-Aware Academic AI Engine |
+
+---
+
 ## 🔑 Evaluator Test Credentials
 
 | Role | Email Address | Password | 1-Click Fast Pass |
@@ -295,7 +308,29 @@ Complete REST API specification:
 ## 💳 Sandbox Payments & Event Passes Note
 
 - **Campus Event Passes**: University event passes (Hackathons, Symposiums, Tech Fests) are issued as **complimentary digital QR entry passes** directly through the platform.
-- **Paid Entry / Test Mode Ready**: The architecture supports Razorpay & Stripe Test Mode sandbox integration for premium paid certifications and merchandise.
+- **Paid Certification & Merchandise Sandbox**: The platform architecture is pre-configured for Razorpay Test Mode & Stripe Sandbox:
+
+| Gateway | Test Card / Account | Expiry | CVV | Test OTP |
+| :--- | :--- | :--- | :--- | :--- |
+| **Razorpay Sandbox** | `4111 2222 3333 4444` | `12/28` | `123` | `123456` |
+| **Stripe Test Mode** | `4242 4242 4242 4242` | `12/28` | `123` | *Auto-Authorized* |
+
+---
+
+## 📦 Hackathon Deliverables Checklist
+
+| # | Deliverable Required by DevFusion 4.0 | Status / Location |
+| :--- | :--- | :--- |
+| 1 | **Source Code (Public GitHub Repo)** | ✅ [github.com/sohanmehar/project-campus](https://github.com/sohanmehar/project-campus) |
+| 2 | **Live Deployed Application** | ✅ [campus-grid-phi-nine.vercel.app](https://campus-grid-phi-nine.vercel.app) |
+| 3 | **README with Setup Instructions** | ✅ Included in [`README.md`](README.md) |
+| 4 | **REST API Documentation** | ✅ [`docs/CampusGPT_API_Documentation.pdf`](docs/CampusGPT_API_Documentation.pdf) |
+| 5 | **Database Schema / ER Diagram** | ✅ [Database ERD Section](#-database-entity-relationship-diagram-erd) |
+| 6 | **System Architecture Diagram** | ✅ [System Architecture Section](#-system-architecture) |
+| 7 | **Evaluator Test Credentials** | ✅ [Test Credentials Table](#-evaluator-test-credentials) |
+| 8 | **Environment Variable Templates** | ✅ [`server/.env.example`](server/.env.example) & [`client/.env.example`](client/.env.example) |
+| 9 | **License File** | ✅ [MIT License](LICENSE) |
+| 10 | **Docker Containerization** | ✅ [`docker-compose.yml`](docker-compose.yml) |
 
 ---
 
