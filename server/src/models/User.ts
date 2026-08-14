@@ -28,6 +28,8 @@ export interface IUser extends Document {
     designation: string;
     officeHours?: string;
   };
+  resetPasswordOtp?: string;
+  resetPasswordExpires?: Date;
   permissions: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -66,6 +68,8 @@ const UserSchema: Schema = new Schema(
       designation: { type: String, default: 'Assistant Professor' },
       officeHours: { type: String, default: '10:00 AM - 12:00 PM' },
     },
+    resetPasswordOtp: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
     permissions: [{ type: String }],
   },
   { timestamps: true }

@@ -6,7 +6,8 @@ import { CheckCircle2, AlertTriangle, BarChart2, Calendar, ShieldCheck } from 'l
 export const AcademicsView: React.FC = () => {
   useAuthStore();
   const [loading, setLoading] = useState(true);
-  const [overallPercentage, setOverallPercentage] = useState(88.5);
+  const [overallPercentage, setOverallPercentage] = useState(0.0);
+  const [totalLectures, setTotalLectures] = useState(0);
   const [subjectAnalytics, setSubjectAnalytics] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'subjects' | 'monthly' | 'calculator'>('subjects');
 
@@ -15,7 +16,8 @@ export const AcademicsView: React.FC = () => {
       try {
         const res = await axios.get('/attendance/student');
         if (res.data) {
-          setOverallPercentage(res.data.overallPercentage ?? 88.5);
+          setOverallPercentage(res.data.overallPercentage ?? 0.0);
+          setTotalLectures(res.data.totalLectures ?? 0);
           setSubjectAnalytics(res.data.subjectAnalytics || []);
         }
       } catch (err) {
@@ -37,6 +39,7 @@ export const AcademicsView: React.FC = () => {
     );
   }
 
+  const isNewStudent = totalLectures === 0;
   const isEligible = overallPercentage >= 75;
 
   const monthlyBreakdown = [
@@ -58,7 +61,9 @@ export const AcademicsView: React.FC = () => {
         <div className="flex items-center space-x-3">
           <div className="px-3.5 sm:px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-left sm:text-right">
             <div className="micro-label text-slate-500 font-bold uppercase">Aggregate Attendance</div>
-            <div className={`text-lg font-mono font-bold ${isEligible ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className={`text-lg font-mono font-bold ${
+              isNewStudent ? 'text-blue-400' : isEligible ? 'text-emerald-400' : 'text-rose-400'
+            }`}>
               {overallPercentage}%
             </div>
           </div>
@@ -68,34 +73,50 @@ export const AcademicsView: React.FC = () => {
       {/* Threshold Status Banner */}
       <div
         className={`stitch-card p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl ${
-          isEligible
+          isNewStudent
+            ? 'bg-blue-500/10 border-blue-500/20'
+            : isEligible
             ? 'bg-emerald-500/10 border-emerald-500/20'
             : 'bg-rose-500/10 border-rose-500/20'
         }`}
       >
         <div className="flex items-start sm:items-center space-x-3">
-          {isEligible ? (
+          {isNewStudent ? (
+            <ShieldCheck className="w-5 h-5 text-blue-400 shrink-0 mt-0.5 sm:mt-0" />
+          ) : isEligible ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5 sm:mt-0" />
           ) : (
             <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5 sm:mt-0" />
           )}
           <div>
-            <h3 className={`text-xs font-bold ${isEligible ? 'text-emerald-300' : 'text-rose-300'}`}>
-              {isEligible ? 'Attendance Standard Satisfied' : 'Attendance Warning'}
+            <h3 className={`text-xs font-bold ${
+              isNewStudent ? 'text-blue-300' : isEligible ? 'text-emerald-300' : 'text-rose-300'
+            }`}>
+              {isNewStudent
+                ? 'No Classroom Sessions Conducted Yet'
+                : isEligible
+                ? 'Attendance Standard Satisfied'
+                : 'Attendance Warning'}
             </h3>
-            <p className={`text-[11px] ${isEligible ? 'text-emerald-400/80' : 'text-rose-400/80'}`}>
-              Your aggregate attendance ({overallPercentage}%) is {isEligible ? 'above' : 'below'} the mandatory 75% university criteria.
+            <p className={`text-[11px] ${
+              isNewStudent ? 'text-blue-300/80' : isEligible ? 'text-emerald-400/80' : 'text-rose-400/80'
+            }`}>
+              {isNewStudent
+                ? '0 classroom sessions logged so far. Your attendance percentage will track live as professors record attendance.'
+                : `Your aggregate attendance (${overallPercentage}%) is ${isEligible ? 'above' : 'below'} the mandatory 75% university criteria.`}
             </p>
           </div>
         </div>
         <span
           className={`px-3 py-1 text-[10px] font-mono font-bold rounded-full border self-start sm:self-auto shrink-0 ${
-            isEligible
+            isNewStudent
+              ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+              : isEligible
               ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
               : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
           }`}
         >
-          {isEligible ? 'ELIGIBLE FOR EXAMS' : 'INELIGIBLE - ACTION REQUIRED'}
+          {isNewStudent ? 'NEW ENROLLMENT' : isEligible ? 'ELIGIBLE FOR EXAMS' : 'INELIGIBLE - ACTION REQUIRED'}
         </span>
       </div>
 
@@ -150,43 +171,58 @@ export const AcademicsView: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            {subjectAnalytics.map((sub, idx) => (
-              <div key={idx} className="p-3.5 sm:p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-500 font-bold">{sub.code}</span>
-                    <h3 className="font-bold text-white text-xs mt-0.5">{sub.subject}</h3>
-                  </div>
-                  <span
-                    className={`px-2.5 py-1 text-[10px] font-bold font-mono rounded-full border ${
-                      sub.percentage >= 75
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                    }`}
-                  >
-                    {sub.percentage}%
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="space-y-1">
-                  <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        sub.percentage >= 75 ? 'bg-emerald-500' : 'bg-rose-500'
+            {subjectAnalytics.map((sub, idx) => {
+              const hasNoSessions = sub.total === 0;
+              return (
+                <div key={idx} className="p-3.5 sm:p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">{sub.code}</span>
+                      <h3 className="font-bold text-white text-xs mt-0.5">{sub.subject}</h3>
+                    </div>
+                    <span
+                      className={`px-2.5 py-1 text-[10px] font-bold font-mono rounded-full border ${
+                        hasNoSessions
+                          ? 'bg-slate-900 text-slate-400 border-slate-800'
+                          : sub.percentage >= 75
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                       }`}
-                      style={{ width: `${Math.min(sub.percentage, 100)}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                    <span>Attended: {sub.attended} / {sub.total} Sessions</span>
-                    <span className={sub.percentage >= 75 ? 'text-emerald-400' : 'text-rose-400'}>
-                      Status: {sub.status}
+                    >
+                      {sub.percentage}%
                     </span>
                   </div>
+
+                  {/* Progress Bar */}
+                  <div className="space-y-1">
+                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          hasNoSessions
+                            ? 'bg-slate-800'
+                            : sub.percentage >= 75
+                            ? 'bg-emerald-500'
+                            : 'bg-rose-500'
+                        }`}
+                        style={{ width: `${hasNoSessions ? 0 : Math.min(sub.percentage, 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                      <span>Attended: {sub.attended} / {sub.total} Sessions</span>
+                      <span className={
+                        hasNoSessions
+                          ? 'text-slate-500'
+                          : sub.percentage >= 75
+                          ? 'text-emerald-400'
+                          : 'text-rose-400'
+                      }>
+                        Status: {hasNoSessions ? 'Not Started' : sub.status}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
-import { Sparkles, Shield, ArrowRight, Lock, Mail } from 'lucide-react';
+import { Sparkles, Shield, ArrowRight, Lock, Mail, KeyRound, X, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, googleLogin, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+
+  // Forgot Password / Reset State
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetOtp, setResetOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     clearError();
@@ -63,14 +74,57 @@ export const Login: React.FC = () => {
     }
   };
 
+  const handleRequestResetOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) return;
+    setResetLoading(true);
+    setResetError(null);
+    try {
+      const res = await axios.post('/auth/forgot-password', { email: resetEmail.trim() });
+      if (res.data?.otp) {
+        setResetOtp(res.data.otp); // Pre-fill generated OTP for instant testing
+      }
+      setResetSuccess(res.data.message || 'OTP verification code generated.');
+      setResetStep('verify');
+    } catch (err: any) {
+      setResetError(err.response?.data?.message || 'Failed to initiate password reset.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetOtp.trim() || !newPassword) return;
+    setResetLoading(true);
+    setResetError(null);
+    try {
+      const res = await axios.post('/auth/reset-password', {
+        email: resetEmail.trim(),
+        otp: resetOtp.trim(),
+        newPassword,
+      });
+      setResetSuccess(res.data.message || 'Password reset successfully!');
+      setTimeout(() => {
+        setIsForgotModalOpen(false);
+        setPassword(newPassword);
+        setEmail(resetEmail);
+      }, 1500);
+    } catch (err: any) {
+      setResetError(err.response?.data?.message || 'Password reset failed.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden">
       <div className="w-full max-w-md space-y-6 relative z-10">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+          <Link to="/" className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider hover:border-blue-500/40 transition">
             <Sparkles className="w-3.5 h-3.5 text-blue-400" />
             <span>CampusGPT Enterprise OS</span>
-          </div>
+          </Link>
           <h1 className="text-3xl font-bold text-white tracking-tight">Sign in to CampusGPT</h1>
           <p className="text-xs text-slate-400">One campus. One platform. One intelligent AI layer.</p>
         </div>
@@ -148,7 +202,22 @@ export const Login: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="micro-label text-slate-400">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="micro-label text-slate-400">Password</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEmail(email || '');
+                    setResetStep('request');
+                    setResetError(null);
+                    setResetSuccess(null);
+                    setIsForgotModalOpen(true);
+                  }}
+                  className="text-[11px] text-blue-400 hover:underline cursor-pointer"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                 <input
@@ -217,6 +286,113 @@ export const Login: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password / OTP Reset Modal */}
+      {isForgotModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="stitch-card p-6 sm:p-7 bg-slate-900 border-slate-800 max-w-md w-full rounded-2xl shadow-2xl space-y-4 relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <KeyRound className="w-4 h-4 text-blue-400" />
+                <h3 className="font-bold text-white text-sm">Account Password Recovery</h3>
+              </div>
+              <button
+                onClick={() => setIsForgotModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {resetError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs">
+                {resetError}
+              </div>
+            )}
+
+            {resetSuccess && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{resetSuccess}</span>
+              </div>
+            )}
+
+            {resetStep === 'request' ? (
+              <form onSubmit={handleRequestResetOtp} className="space-y-4">
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Enter your registered university email. We will generate a secure 6-digit OTP code to verify your identity.
+                </p>
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">University Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="name@campusgpt.edu"
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={resetLoading || !resetEmail}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl flex items-center justify-center space-x-2 transition shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer"
+                >
+                  <span>{resetLoading ? 'Generating OTP...' : 'Send Verification OTP'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleConfirmResetPassword} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">6-Digit Verification OTP Code</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={resetOtp}
+                    onChange={(e) => setResetOtp(e.target.value)}
+                    placeholder="e.g. 842109"
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono tracking-widest focus:outline-none focus:border-blue-500 text-center"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setResetStep('request')}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={resetLoading || !resetOtp || !newPassword}
+                    className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl flex items-center justify-center space-x-2 transition shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer"
+                  >
+                    <span>{resetLoading ? 'Resetting Password...' : 'Confirm New Password'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

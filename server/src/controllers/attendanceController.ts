@@ -17,25 +17,17 @@ export const getStudentAttendanceSummary = async (req: AuthRequest, res: Respons
     const sessions = await AttendanceSession.find({ 'records.studentId': studentId }).populate('courseId', 'code name');
 
     if (sessions.length === 0) {
-      // Return default baseline metrics if no sessions are logged yet
+      // 0 sessions logged for newly enrolled student
       return res.status(200).json({
         success: true,
-        overallPercentage: 88.4,
-        targetPercentage: 90.0,
-        totalClasses: 25,
-        attendedClasses: 22,
-        safeAbsencesLeft: 3,
-        subjectWise: [
-          { courseCode: 'CS-302', courseName: 'Molecular Biology', percentage: 95.0, status: 'Optimal' },
-          { courseCode: 'MATH-202', courseName: 'Calculus IV', percentage: 74.8, status: 'Warning' },
-          { courseCode: 'CS-401', courseName: 'Computer Networks', percentage: 88.0, status: 'Good' },
-        ],
-        riskAlerts: [
-          {
-            courseName: 'Calculus IV',
-            message: 'Critical Alert: Attendance is 74.8% (0.2% below 75% threshold). Missed next session results in exam bar.',
-          },
-        ],
+        overallPercentage: 0.0,
+        targetPercentage: 75.0,
+        totalClasses: 0,
+        attendedClasses: 0,
+        safeAbsencesLeft: 0,
+        isNewStudent: true,
+        subjectWise: [],
+        riskAlerts: [],
       });
     }
 
@@ -196,11 +188,11 @@ export const getStudentAttendanceAnalytics = async (req: AuthRequest, res: Respo
 
     // Format analytics response
     const subjectAnalytics = Object.values(subjectMap).map((sub) => {
-      const percentage = sub.total > 0 ? Number(((sub.attended / sub.total) * 100).toFixed(1)) : 100;
+      const percentage = sub.total > 0 ? Number(((sub.attended / sub.total) * 100).toFixed(1)) : 0;
       return {
         ...sub,
         percentage,
-        status: percentage >= 75 ? 'Optimal' : 'At Risk',
+        status: sub.total === 0 ? 'Not Started' : percentage >= 75 ? 'Optimal' : 'At Risk',
       };
     });
 
@@ -208,13 +200,14 @@ export const getStudentAttendanceAnalytics = async (req: AuthRequest, res: Respo
     const totalLectures = studentLogs.length;
     const overallPercentage = totalLectures > 0 
       ? Number(((totalAttended / totalLectures) * 100).toFixed(1)) 
-      : (studentLogs.length === 0 ? 88.5 : 100);
+      : 0.0;
 
     return res.status(200).json({
       success: true,
       overallPercentage,
-      totalAttended: totalLectures > 0 ? totalAttended : 22,
-      totalLectures: totalLectures > 0 ? totalLectures : 25,
+      totalAttended,
+      totalLectures,
+      isNewStudent: totalLectures === 0,
       subjectAnalytics,
       logs: studentLogs,
     });

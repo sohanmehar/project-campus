@@ -26,6 +26,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: 'student' | 'faculty' | 'coordinator' | 'admin';
   department: string;
   avatarUrl?: string;
@@ -43,6 +44,7 @@ interface AuthState {
   signup: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  updateUser: (userData: any) => void;
   clearError: () => void;
 }
 
@@ -203,5 +205,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.removeItem('campusgpt_token');
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
     }
+  },
+
+  updateUser: (updatedUser: any) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, ...updatedUser } : updatedUser,
+    }));
   },
 }));

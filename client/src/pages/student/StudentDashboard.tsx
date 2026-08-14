@@ -41,7 +41,7 @@ export const StudentDashboard: React.FC = () => {
         ]);
 
         // 1. Real Attendance Percentage from MongoDB
-        let liveAttendance = 88.5;
+        let liveAttendance = 0.0;
         if (attRes.status === 'fulfilled' && attRes.value.data?.overallPercentage !== undefined) {
           liveAttendance = attRes.value.data.overallPercentage;
         }

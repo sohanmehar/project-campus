@@ -4,6 +4,10 @@ import { useAuthStore } from './store/useAuthStore';
 import { useToastStore } from './store/useToastStore';
 import { useThemeStore } from './store/useThemeStore';
 
+// Public Marketing & Error Pages
+import { LandingPage } from './pages/LandingPage';
+import { NotFound } from './pages/NotFound';
+
 // Layout & Auth
 import { Login } from './pages/auth/Login';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -78,7 +82,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-// 4. Role-Based Default Dashboard Redirect
+// 4. Default Role Dashboard Redirector
 const DefaultDashboardRedirect: React.FC = () => {
   const { user } = useAuthStore();
   if (user?.role === 'admin') return <AdminDashboard />;
@@ -88,9 +92,9 @@ const DefaultDashboardRedirect: React.FC = () => {
 };
 
 export default function App() {
-  const { user, isAuthenticated, isLoading, checkAuth } = useAuthStore();
-  const { addToast } = useToastStore();
   const { theme, setTheme } = useThemeStore();
+  const { isAuthenticated, checkAuth, isLoading, user } = useAuthStore();
+  const { addToast } = useToastStore();
 
   useEffect(() => {
     setTheme(theme);
@@ -117,6 +121,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Marketing Landing Page (PDF Page 6) */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/home" element={<LandingPage />} />
+
         {/* Public Login Route */}
         <Route
           path="/login"
@@ -203,13 +211,16 @@ export default function App() {
                     }
                   />
 
-                  {/* Fallback Catch-all Redirect */}
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  {/* 404 Inside App */}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </AppLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* Global 404 Catch-All */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <ToastContainer />
     </BrowserRouter>

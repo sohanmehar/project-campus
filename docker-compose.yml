@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb+srv://sohanmehar14:e4jX8aQh5y5j7cR9@campusgpt-cluster.j9v8e.mongodb.net/campusgpt?retryWrites=true&w=majority&appName=campusgpt-cluster
+      - JWT_SECRET=campusgpt_super_secret_jwt_key_2026_production
+      - CLIENT_URL=http://localhost:80
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    restart: unless-stopped
