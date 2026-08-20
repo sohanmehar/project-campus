@@ -205,41 +205,28 @@ export const ClubsView: React.FC = () => {
               {/* Action Button */}
               <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
                 {club.isMember ? (
-                  <div className="flex items-center space-x-1.5 text-emerald-400 text-xs font-semibold">
+                  <div className="flex items-center space-x-1.5 text-emerald-400 text-xs font-semibold bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 w-full justify-center">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Registered Member</span>
+                    <span>Official Club Member</span>
                   </div>
                 ) : club.isPending ? (
-                  <div className="flex items-center space-x-1.5 text-amber-400 text-xs font-semibold">
+                  <div className="flex items-center space-x-1.5 text-amber-400 text-xs font-semibold bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 w-full justify-center">
                     <Clock className="w-4 h-4" />
-                    <span>Pending Coordinator Review</span>
+                    <span>Application Submitted & Saved</span>
                   </div>
                 ) : (
-                  <span className="text-[11px] text-slate-500 font-mono">Open Membership</span>
-                )}
-
-                <button
-                  onClick={() => handleToggleMembership(club)}
-                  disabled={processingId === club._id}
-                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50 ${
-                    club.isMember
-                      ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20'
-                      : club.isPending
-                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
-                      : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
-                  }`}
-                >
-                  {club.isMember ? (
-                    <span>Leave</span>
-                  ) : club.isPending ? (
-                    <span className="text-amber-400">Cancel Application</span>
-                  ) : (
-                    <>
+                  <>
+                    <span className="text-[11px] text-slate-500 font-mono">Open Membership</span>
+                    <button
+                      onClick={() => handleToggleMembership(club)}
+                      disabled={processingId === club._id}
+                      className="px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50 bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20"
+                    >
                       <UserPlus className="w-3.5 h-3.5" />
-                      <span>Join Club</span>
-                    </>
-                  )}
-                </button>
+                      <span>{processingId === club._id ? 'Submitting...' : 'Apply / Join Club'}</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           );

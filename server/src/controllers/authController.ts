@@ -295,6 +295,13 @@ export const updateStudentProfile = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'User record not found.' });
     }
 
+    // Profile Lock enforcement for students
+    if (user.role === 'student' && user.profileLocked && (req as any).user?.role !== 'admin') {
+      return res.status(403).json({
+        message: 'Your profile has been locked after initial onboarding. Please contact Admin to request any details modification.',
+      });
+    }
+
     // Update department if provided
     if (department && String(department).trim()) {
       user.department = String(department).trim();
@@ -354,6 +361,51 @@ export const updateStudentProfile = async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error updating profile', error: error.message });
+  }
+};
+
+// @desc    Complete initial student onboarding and lock profile
+// @route   POST /api/v1/auth/onboarding
+// @access  Private (Student)
+export const completeStudentOnboarding = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { rollNumber, phone, department, semester, skills, bio } = req.body;
+
+    if (!rollNumber || !phone || !department) {
+      return res.status(400).json({ message: 'Roll Number/USN, Phone, and Department are required.' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    user.phone = phone.trim();
+    user.department = department.trim();
+    user.profileLocked = true;
+
+    user.studentDetails = {
+      rollNumber: rollNumber.trim(),
+      phone: phone.trim(),
+      semester: Number(semester) || 1,
+      cgpa: user.studentDetails?.cgpa || 8.0,
+      skills: Array.isArray(skills) ? skills : (skills ? skills.split(',').map((s: string) => s.trim()) : []),
+      bio: bio || '',
+      linkedinUrl: user.studentDetails?.linkedinUrl || '',
+      githubUrl: user.studentDetails?.githubUrl || '',
+      resumeUrl: user.studentDetails?.resumeUrl || '',
+    };
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile completed and locked successfully!',
+      user,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ message: 'Failed to complete profile onboarding', error: error.message });
   }
 };
 

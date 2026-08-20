@@ -12,6 +12,7 @@ import { NotFound } from './pages/NotFound';
 import { Login } from './pages/auth/Login';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ToastContainer } from './components/ui/ToastContainer';
+import { StudentOnboardingModal } from './components/StudentOnboardingModal';
 
 // Student Pages
 import { StudentDashboard } from './pages/student/StudentDashboard';
@@ -222,6 +223,7 @@ export default function App() {
         {/* Global 404 Catch-All */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <StudentOnboardingModal />
       <ToastContainer />
     </BrowserRouter>
   );

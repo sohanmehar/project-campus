@@ -14,7 +14,8 @@ import {
   deleteNotice,
   addFacultyCourse,
   deleteFacultyCourse,
-  updateCourseSyllabus
+  updateCourseSyllabus,
+  reopenSubmissionWindow
 } from '../controllers/facultyController';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware';
 
@@ -38,6 +39,7 @@ router.delete('/assignments/:id', requireRole(['faculty', 'admin']), deleteAssig
 router.get('/submissions', requireRole(['faculty', 'admin']), getFacultySubmissions);
 router.put('/submissions/:id/grade', requireRole(['faculty', 'admin']), gradeSubmission);
 router.patch('/submissions/:id/grade', requireRole(['faculty', 'admin']), gradeSubmission);
+router.post('/submissions/:id/reopen', requireRole(['faculty', 'admin']), reopenSubmissionWindow);
 
 // Notices & Course Content
 router.post('/notices', requireRole(['faculty', 'admin', 'coordinator']), createNotice);

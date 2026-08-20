@@ -209,11 +209,23 @@ export const AssignmentsView: React.FC = () => {
                             <span>SUBMITTED</span>
                           </span>
 
-                          {existingSub.marks !== undefined && existingSub.marks !== null && (
+                          {existingSub.marksObtained !== undefined && existingSub.marksObtained !== null && (
                             <span className="px-2 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold rounded-lg flex items-center space-x-1">
                               <Award className="w-3 h-3" />
-                              <span>{existingSub.marks}/{assignment.totalMarks || 100}</span>
+                              <span>{existingSub.marksObtained}/{assignment.totalMarks || 100}</span>
                             </span>
+                          )}
+
+                          {/* Allow Resubmission if deadline is active OR faculty explicitly unlocked window */}
+                          {(!assignment.deadline || new Date() <= new Date(assignment.deadline) || existingSub.allowResubmission) && (
+                            <button
+                              onClick={() => setSelectedSubmissionAssignment(assignment)}
+                              className="px-2.5 py-1 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-[10px] font-semibold rounded-lg flex items-center space-x-1 transition cursor-pointer"
+                              title="Edit / Resubmit Assignment"
+                            >
+                              <Upload className="w-3 h-3" />
+                              <span>{existingSub.allowResubmission ? 'Re-opened: Edit' : 'Edit Submission'}</span>
+                            </button>
                           )}
                         </div>
                       ) : (

@@ -21,7 +21,10 @@ import {
   getSystemSettings,
   updateSystemSettings,
   getAiPlatformMetrics,
-  globalSearch
+  globalSearch,
+  getAdminComplaints,
+  updateComplaintStatus,
+  getEventAnalytics
 } from '../controllers/adminController';
 import { authenticateToken, requireRole } from '../middleware/authMiddleware';
 
@@ -60,5 +63,8 @@ router.delete('/departments/:id/courses/:courseCode', deleteCourseFromDepartment
 router.get('/settings', getSystemSettings);
 router.put('/settings', updateSystemSettings);
 router.get('/ai-metrics', getAiPlatformMetrics);
+router.get('/complaints', getAdminComplaints);
+router.patch('/complaints/:id', updateComplaintStatus);
+router.get('/events-analytics', getEventAnalytics);
 
 export default router;

@@ -35,9 +35,51 @@ export const CoordinatorDashboard: React.FC = () => {
     }
   };
 
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+  const [calTitle, setCalTitle] = useState('');
+  const [calCategory, setCalCategory] = useState<'holiday' | 'exam' | 'event' | 'deadline'>('holiday');
+  const [calDate, setCalDate] = useState(new Date().toISOString().split('T')[0]);
+  const [calDesc, setCalDesc] = useState('');
+  const [addingCal, setAddingCal] = useState(false);
+
+  const fetchCalendarEvents = async () => {
+    try {
+      const res = await axios.get('/calendar');
+      if (res.data?.data) {
+        setCalendarEvents(res.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching calendar in coordinator dashboard', err);
+    }
+  };
+
   useEffect(() => {
-    fetchCoordinatorData();
+    fetchCalendarEvents();
   }, []);
+
+  const handleAddCalendarItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!calTitle.trim() || !calDate) return;
+    setAddingCal(true);
+    try {
+      await axios.post('/calendar', {
+        title: calTitle.trim(),
+        category: calCategory,
+        startDate: calDate,
+        description: calDesc,
+      });
+      addToast('success', 'Calendar Updated', `'${calTitle}' added to official Academic Calendar.`);
+      setCalTitle('');
+      setCalDesc('');
+      setIsCalendarModalOpen(false);
+      fetchCalendarEvents();
+    } catch (err: any) {
+      addToast('error', 'Error', err.response?.data?.message || 'Could not add calendar item.');
+    } finally {
+      setAddingCal(false);
+    }
+  };
 
   const handleApprove = async (id: string, name: string, target: string) => {
     try {
@@ -306,6 +348,111 @@ export const CoordinatorDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Academic Calendar Manager Card for Coordinators */}
+      <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-4 rounded-2xl">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 className="font-semibold text-white text-sm">Academic Calendar & Holiday Manager</h2>
+            <p className="text-xs text-slate-400">Post university holidays, exam schedules, and academic milestones</p>
+          </div>
+          <button
+            onClick={() => setIsCalendarModalOpen(true)}
+            className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition shadow-lg shadow-purple-600/20 cursor-pointer"
+          >
+            <span>+ Add Calendar Event</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {calendarEvents.map((item, idx) => (
+            <div key={item._id || idx} className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 text-[9px] font-bold font-mono rounded uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  {item.category}
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">{new Date(item.startDate).toLocaleDateString()}</span>
+              </div>
+              <div className="font-bold text-white text-xs mt-1">{item.title}</div>
+              <p className="text-slate-400 text-[11px] line-clamp-2">{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Add Calendar Item Modal */}
+      {isCalendarModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="stitch-card p-6 bg-slate-900 border-slate-800 max-w-md w-full space-y-4 rounded-2xl shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="font-bold text-white text-sm">Add Academic Calendar Item</h3>
+              <button onClick={() => setIsCalendarModalOpen(false)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCalendarItem} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="micro-label text-slate-400">Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={calTitle}
+                  onChange={(e) => setCalTitle(e.target.value)}
+                  placeholder="e.g. End Semester Theory Exam"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">Category *</label>
+                  <select
+                    value={calCategory}
+                    onChange={(e) => setCalCategory(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                  >
+                    <option value="holiday">Holiday</option>
+                    <option value="exam">Exam Schedule</option>
+                    <option value="deadline">Submission Deadline</option>
+                    <option value="event">Campus Event</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="micro-label text-slate-400">Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={calDate}
+                    onChange={(e) => setCalDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="micro-label text-slate-400">Description</label>
+                <textarea
+                  rows={2}
+                  value={calDesc}
+                  onChange={(e) => setCalDesc(e.target.value)}
+                  placeholder="Provide brief details..."
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500 resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={addingCal || !calTitle}
+                className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition shadow-lg shadow-purple-600/20 disabled:opacity-50 cursor-pointer"
+              >
+                {addingCal ? 'Saving...' : 'Add to Academic Calendar'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
       {/* Student Dossier Modal for Coordinator */}
       {selectedStudentProfile && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">

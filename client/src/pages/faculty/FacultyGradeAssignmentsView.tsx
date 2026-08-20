@@ -446,18 +446,40 @@ export const FacultyGradeAssignmentsView: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedSubmission({ ...sub, studentName, assignTitle, totalMarks });
-                            setGradingForm({
-                              marksObtained: sub.marksObtained !== null && sub.marksObtained !== undefined ? sub.marksObtained.toString() : '90',
-                              feedback: sub.feedback || 'Good work on this assignment.',
-                            });
-                          }}
-                          className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-semibold rounded-lg transition cursor-pointer"
-                        >
-                          {sub.status === 'graded' ? 'Update Grade' : 'Grade Submission'}
-                        </button>
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => {
+                              setSelectedSubmission({ ...sub, studentName, assignTitle, totalMarks });
+                              setGradingForm({
+                                marksObtained: sub.marksObtained !== null && sub.marksObtained !== undefined ? sub.marksObtained.toString() : '90',
+                                feedback: sub.feedback || 'Good work on this assignment.',
+                              });
+                            }}
+                            className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-semibold rounded-lg transition cursor-pointer"
+                          >
+                            {sub.status === 'graded' ? 'Update Grade' : 'Grade Submission'}
+                          </button>
+
+                          <button
+                            onClick={async () => {
+                              try {
+                                await axios.post(`/faculty/submissions/${sub._id}/reopen`);
+                                addToast('success', 'Window Unlocked', `Re-opened submission window for ${studentName}.`);
+                                fetchFacultyData();
+                              } catch (err: any) {
+                                addToast('error', 'Error', err.response?.data?.message || 'Could not re-open submission window.');
+                              }
+                            }}
+                            className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition border cursor-pointer ${
+                              sub.allowResubmission
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : 'bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border-purple-500/30'
+                            }`}
+                            title="Allow student to upload a corrected file"
+                          >
+                            {sub.allowResubmission ? 'Unlocked' : 'Re-open Window'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

@@ -171,11 +171,19 @@ export const FacultyAttendanceView: React.FC = () => {
 
           <button
             onClick={handleSaveSession}
-            disabled={saving}
+            disabled={saving || (new Date(lectureDate).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && isSavedSession)}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer"
           >
             <Save className="w-4 h-4" />
-            <span>{saving ? 'Saving Session...' : isSavedSession ? 'Update Session' : 'Submit Attendance'}</span>
+            <span>
+              {saving
+                ? 'Saving Session...'
+                : (new Date(lectureDate).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && isSavedSession)
+                ? 'Locked (Past Date)'
+                : isSavedSession
+                ? 'Update Session'
+                : 'Submit Attendance'}
+            </span>
           </button>
         </div>
       </div>

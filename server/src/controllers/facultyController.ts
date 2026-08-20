@@ -84,9 +84,29 @@ export const markAttendanceSession = async (req: AuthRequest, res: Response) => 
     if (Number.isNaN(sessionDate.getTime())) {
       return res.status(400).json({ message: 'A valid lecture date is required.' });
     }
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const isPastDate = new Date(sessionDate).setHours(0, 0, 0, 0) < todayStart.getTime();
+
     sessionDate.setHours(0, 0, 0, 0);
     const nextDay = new Date(sessionDate);
     nextDay.setDate(nextDay.getDate() + 1);
+
+    // Look for existing session today or on past date
+    const existingTodaySession = await AttendanceSession.findOne({
+      facultyId: validFacultyObjectId,
+      subject: subject.trim(),
+      date: { $gte: sessionDate, $lt: nextDay },
+    });
+
+    // Constraint 1: Past-date attendance edit lock
+    if (existingTodaySession && isPastDate && (req as any).user?.role !== 'admin') {
+      return res.status(403).json({
+        message: 'Attendance records for past dates are strictly locked and cannot be edited after the day has passed.',
+      });
+    }
 
     const sessionData = {
       courseId: courseId && mongoose.Types.ObjectId.isValid(courseId)
@@ -577,6 +597,17 @@ export const addFacultyCourse = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Department not found.' });
     }
 
+    // Constraint: Max 4 courses per faculty member
+    const instructorName = instructor || facultyUser?.name || 'Dr. Sarah Jenkins';
+    const existingFacultyCourses = dept.activeCourses.filter((c) =>
+      c.instructor?.toLowerCase().includes(instructorName.toLowerCase())
+    );
+    if (existingFacultyCourses.length >= 4 && (req as any).user?.role !== 'admin') {
+      return res.status(400).json({
+        message: `Maximum course limit reached! Faculty member '${instructorName}' is already assigned ${existingFacultyCourses.length} active courses (Max limit is 4).`,
+      });
+    }
+
     const codeUpper = code.trim().toUpperCase();
     if (dept.activeCourses.some((c) => c.code.toUpperCase() === codeUpper)) {
       return res.status(409).json({ message: `Course code '${codeUpper}' already exists in this department.` });
@@ -686,5 +717,42 @@ export const updateCourseSyllabus = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ message: 'Course record matching failed.' });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error updating course syllabus', error: error.message });
+  }
+};
+
+// @desc    Faculty: Re-open submission window for a student
+// @route   POST /api/v1/faculty/submissions/:id/reopen
+// @access  Private (Faculty)
+export const reopenSubmissionWindow = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const targetId = Array.isArray(id) ? id[0] : id;
+
+    if (!targetId || !mongoose.Types.ObjectId.isValid(targetId)) {
+      return res.status(400).json({ message: 'Valid submission ID is required.' });
+    }
+
+    const submission = await Submission.findByIdAndUpdate(
+      targetId,
+      {
+        $set: {
+          allowResubmission: true,
+          status: 'submitted',
+        },
+      },
+      { new: true }
+    );
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission record not found.' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Submission window re-opened successfully for this student.',
+      submission,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ message: 'Error re-opening submission window', error: error.message });
   }
 };

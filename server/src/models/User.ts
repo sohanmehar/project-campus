@@ -31,6 +31,7 @@ export interface IUser extends Document {
   resetPasswordOtp?: string;
   resetPasswordExpires?: Date;
   permissions: string[];
+  profileLocked?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +54,7 @@ const UserSchema: Schema = new Schema(
     phone: { type: String, default: '' },
     avatarUrl: { type: String, default: '' },
     isVerified: { type: Boolean, default: true },
+    profileLocked: { type: Boolean, default: false },
     studentDetails: {
       rollNumber: { type: String, sparse: true },
       phone: { type: String, default: '' },

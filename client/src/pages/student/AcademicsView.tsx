@@ -9,19 +9,28 @@ export const AcademicsView: React.FC = () => {
   const [overallPercentage, setOverallPercentage] = useState(0.0);
   const [totalLectures, setTotalLectures] = useState(0);
   const [subjectAnalytics, setSubjectAnalytics] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'subjects' | 'monthly' | 'calculator'>('subjects');
+  const [activeTab, setActiveTab] = useState<'subjects' | 'monthly' | 'calculator' | 'calendar'>('subjects');
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchRealAttendance = async () => {
       try {
-        const res = await axios.get('/attendance/student');
-        if (res.data) {
-          setOverallPercentage(res.data.overallPercentage ?? 0.0);
-          setTotalLectures(res.data.totalLectures ?? 0);
-          setSubjectAnalytics(res.data.subjectAnalytics || []);
+        const [res, calRes] = await Promise.allSettled([
+          axios.get('/attendance/student'),
+          axios.get('/calendar'),
+        ]);
+
+        if (res.status === 'fulfilled' && res.value.data) {
+          setOverallPercentage(res.value.data.overallPercentage ?? 0.0);
+          setTotalLectures(res.value.data.totalLectures ?? 0);
+          setSubjectAnalytics(res.value.data.subjectAnalytics || []);
+        }
+
+        if (calRes.status === 'fulfilled' && calRes.value.data?.data) {
+          setCalendarEvents(calRes.value.data.data);
         }
       } catch (err) {
-        console.error('Error fetching student attendance', err);
+        console.error('Error fetching student academic data', err);
       } finally {
         setLoading(false);
       }
@@ -157,6 +166,18 @@ export const AcademicsView: React.FC = () => {
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>Absence Buffer & Safety</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('calendar')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition shrink-0 cursor-pointer ${
+            activeTab === 'calendar'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+              : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5 text-amber-400" />
+          <span>Academic Calendar</span>
+        </button>
       </div>
 
       {/* Tab 1: Subject-Wise Analytics */}
@@ -289,6 +310,56 @@ export const AcademicsView: React.FC = () => {
               <div className="text-xl font-bold font-mono text-emerald-400">SAFE</div>
               <p className="text-[10px] text-slate-500">On track for full hall-ticket clearance</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Academic Calendar & Holidays */}
+      {activeTab === 'calendar' && (
+        <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-4 rounded-2xl">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 className="font-semibold text-white text-sm">Official Campus Academic Calendar</h2>
+              <p className="text-xs text-slate-400">Key exam dates, university holidays, submission deadlines, and campus events</p>
+            </div>
+            <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+              {calendarEvents.length > 0 ? calendarEvents.length : 4} Upcoming Milestones
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            {(calendarEvents.length > 0
+              ? calendarEvents
+              : [
+                  { title: 'Mid-Semester Examinations', category: 'exam', startDate: '2026-09-15', description: 'Institutional mid-term theory and lab evaluations across all departments.' },
+                  { title: 'Ganesh Chaturthi Holiday', category: 'holiday', startDate: '2026-09-07', description: 'Official campus holiday. Classes and administrative offices closed.' },
+                  { title: 'Technical Paper Submission Deadline', category: 'deadline', startDate: '2026-09-25', description: 'Final date for 7th Semester Capstone Project Synopsis approval.' },
+                  { title: 'Annual Hackathon & Tech Fest', category: 'event', startDate: '2026-10-10', description: 'Campus-wide 36-hour hackathon organized by CSI Student Chapter.' },
+                ]
+            ).map((item, idx) => (
+              <div key={item._id || idx} className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className={`px-2.5 py-0.5 text-[10px] font-bold font-mono rounded-full uppercase border ${
+                    item.category === 'holiday'
+                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      : item.category === 'exam'
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      : item.category === 'deadline'
+                      ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                      : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                  }`}>
+                    {item.category}
+                  </span>
+
+                  <span className="text-[11px] font-mono text-slate-400">
+                    {new Date(item.startDate).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <h3 className="font-bold text-white text-sm">{item.title}</h3>
+                <p className="text-slate-400 text-xs leading-relaxed">{item.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}

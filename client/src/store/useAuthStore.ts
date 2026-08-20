@@ -57,6 +57,7 @@ export interface User {
   role: 'student' | 'faculty' | 'coordinator' | 'admin';
   department: string;
   avatarUrl?: string;
+  profileLocked?: boolean;
   studentDetails?: any;
   facultyDetails?: any;
 }
@@ -72,6 +73,7 @@ interface AuthState {
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   updateUser: (userData: any) => void;
+  completeOnboarding: (payload: any) => Promise<void>;
   clearError: () => void;
 }
 
@@ -239,6 +241,25 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (err) {
       removeStoredToken();
       set({ user: null, isAuthenticated: false, isLoading: false, error: null });
+    }
+  },
+
+  completeOnboarding: async (payload: any) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.post('/auth/onboarding', payload);
+      if (response.data?.user) {
+        const rawUser = response.data.user;
+        const user = {
+          ...rawUser,
+          id: (rawUser.id || rawUser._id || '').toString(),
+          profileLocked: true,
+        };
+        set({ user, isLoading: false, error: null });
+      }
+    } catch (err: any) {
+      set({ isLoading: false, error: err.response?.data?.message || 'Failed to complete profile onboarding.' });
+      throw err;
     }
   },
 
