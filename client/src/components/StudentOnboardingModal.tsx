@@ -14,7 +14,7 @@ export const StudentOnboardingModal: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Check if student has already completed onboarding via profile lock, existing fields, or local storage flag
-  const userIdOrEmail = user?.id || user?._id || user?.email || 'student';
+  const userIdOrEmail = user?.id || user?.email || 'student';
   const isAlreadyOnboarded =
     user?.profileLocked ||
     Boolean(user?.studentDetails?.rollNumber && user?.phone) ||
