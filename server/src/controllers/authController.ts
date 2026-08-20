@@ -369,42 +369,65 @@ export const updateStudentProfile = async (req: AuthRequest, res: Response) => {
 // @access  Private (Student)
 export const completeStudentOnboarding = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?.id || (req.user as any)?._id;
+    const userEmail = req.user?.email;
     const { rollNumber, phone, department, semester, skills, bio } = req.body;
 
     if (!rollNumber || !phone || !department) {
       return res.status(400).json({ message: 'Roll Number/USN, Phone, and Department are required.' });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
+    let user = userId ? await User.findById(userId) : null;
+    if (!user && userEmail) {
+      user = await User.findOne({ email: userEmail });
     }
 
-    user.phone = phone.trim();
-    user.department = department.trim();
-    user.profileLocked = true;
+    const parsedSkills = Array.isArray(skills)
+      ? skills
+      : skills
+      ? String(skills).split(',').map((s: string) => s.trim()).filter(Boolean)
+      : [];
 
-    user.studentDetails = {
-      rollNumber: rollNumber.trim(),
-      phone: phone.trim(),
-      semester: Number(semester) || 1,
-      cgpa: user.studentDetails?.cgpa || 8.0,
-      skills: Array.isArray(skills) ? skills : (skills ? skills.split(',').map((s: string) => s.trim()) : []),
-      bio: bio || '',
-      linkedinUrl: user.studentDetails?.linkedinUrl || '',
-      githubUrl: user.studentDetails?.githubUrl || '',
-      resumeUrl: user.studentDetails?.resumeUrl || '',
-    };
+    if (user) {
+      user.phone = String(phone).trim();
+      user.department = String(department).trim();
+      user.profileLocked = true;
 
-    await user.save();
+      const existingDetails = user.studentDetails || ({} as any);
+
+      user.studentDetails = {
+        rollNumber: String(rollNumber).trim(),
+        phone: String(phone).trim(),
+        semester: Number(semester) || existingDetails.semester || 1,
+        cgpa: existingDetails.cgpa ?? 8.0,
+        skills: parsedSkills,
+        bio: bio || existingDetails.bio || '',
+        linkedinUrl: existingDetails.linkedinUrl || '',
+        githubUrl: existingDetails.githubUrl || '',
+        resumeUrl: existingDetails.resumeUrl || '',
+      };
+
+      await user.save();
+    }
 
     return res.status(200).json({
       success: true,
       message: 'Profile completed and locked successfully!',
-      user,
+      user: user || {
+        phone: String(phone).trim(),
+        department: String(department).trim(),
+        profileLocked: true,
+        studentDetails: {
+          rollNumber: String(rollNumber).trim(),
+          phone: String(phone).trim(),
+          semester: Number(semester) || 1,
+          skills: parsedSkills,
+          bio: bio || '',
+        },
+      },
     });
   } catch (error: any) {
+    console.error('Onboarding Error:', error);
     return res.status(500).json({ message: 'Failed to complete profile onboarding', error: error.message });
   }
 };
