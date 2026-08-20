@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
-import { CheckCircle2, AlertTriangle, BarChart2, Calendar, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, BarChart2, Calendar as CalendarIcon, ShieldCheck, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 
 export const AcademicsView: React.FC = () => {
   useAuthStore();
@@ -11,6 +11,10 @@ export const AcademicsView: React.FC = () => {
   const [subjectAnalytics, setSubjectAnalytics] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'subjects' | 'monthly' | 'calculator' | 'calendar'>('subjects');
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+
+  // Visual Calendar Grid State
+  const [calendarViewDate, setCalendarViewDate] = useState(new Date(2026, 8, 1)); // September 2026 default
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRealAttendance = async () => {
@@ -57,6 +61,84 @@ export const AcademicsView: React.FC = () => {
     { month: 'June 2026', percentage: 89.2, conducted: 46, attended: 41, status: 'Optimal' },
     { month: 'May 2026', percentage: 84.0, conducted: 50, attended: 42, status: 'Good' },
   ];
+
+  // Calendar calculations
+  const viewYear = calendarViewDate.getFullYear();
+  const viewMonth = calendarViewDate.getMonth();
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+  const totalDaysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+
+  const defaultCalendarEvents = [
+    { _id: 'default-1', title: 'Mid-Semester Examinations', category: 'exam', startDate: '2026-09-15', description: 'Institutional mid-term theory and lab evaluations across all departments.' },
+    { _id: 'default-2', title: 'Ganesh Chaturthi Holiday', category: 'holiday', startDate: '2026-09-07', description: 'Official campus holiday. Classes and administrative offices closed.' },
+    { _id: 'default-3', title: 'Technical Paper Submission Deadline', category: 'deadline', startDate: '2026-09-25', description: 'Final date for 7th Semester Capstone Project Synopsis approval.' },
+    { _id: 'default-4', title: 'Annual Hackathon & Tech Fest', category: 'event', startDate: '2026-10-10', description: 'Campus-wide 36-hour hackathon organized by CSI Student Chapter.' },
+  ];
+
+  const activeEventsList = calendarEvents.length > 0 ? calendarEvents : defaultCalendarEvents;
+
+  // Group events by YYYY-MM-DD
+  const eventsByDateMap = activeEventsList.reduce((acc: Record<string, any[]>, item: any) => {
+    if (!item.startDate) return acc;
+    const dateStr = new Date(item.startDate).toISOString().split('T')[0];
+    if (!acc[dateStr]) acc[dateStr] = [];
+    acc[dateStr].push(item);
+    return acc;
+  }, {});
+
+  // Build grid items
+  const calendarGrid = [];
+
+  for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+    calendarGrid.push({
+      dayNumber: daysInPrevMonth - i,
+      isCurrentMonth: false,
+      dateIso: '',
+      events: [],
+    });
+  }
+
+  const todayIso = new Date().toISOString().split('T')[0];
+  for (let day = 1; day <= totalDaysInMonth; day++) {
+    const formattedDay = String(day).padStart(2, '0');
+    const formattedMonth = String(viewMonth + 1).padStart(2, '0');
+    const dateIso = `${viewYear}-${formattedMonth}-${formattedDay}`;
+    const dayEvents = eventsByDateMap[dateIso] || [];
+
+    calendarGrid.push({
+      dayNumber: day,
+      isCurrentMonth: true,
+      dateIso,
+      isToday: dateIso === todayIso,
+      events: dayEvents,
+    });
+  }
+
+  const remainingCells = (7 - (calendarGrid.length % 7)) % 7;
+  for (let day = 1; day <= remainingCells; day++) {
+    calendarGrid.push({
+      dayNumber: day,
+      isCurrentMonth: false,
+      dateIso: '',
+      events: [],
+    });
+  }
+
+  const filteredEvents = selectedCalendarDate
+    ? activeEventsList.filter((item: any) => {
+        const itemDateIso = new Date(item.startDate).toISOString().split('T')[0];
+        return itemDateIso === selectedCalendarDate;
+      })
+    : activeEventsList;
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-6">
@@ -129,7 +211,7 @@ export const AcademicsView: React.FC = () => {
         </span>
       </div>
 
-      {/* Navigation Sub-Tabs (Subject Analytics, Monthly Reports, Safe Buffer) */}
+      {/* Navigation Sub-Tabs */}
       <div className="flex overflow-x-auto gap-2 border-b border-slate-800 pb-2 no-scrollbar">
         <button
           onClick={() => setActiveTab('subjects')}
@@ -151,7 +233,7 @@ export const AcademicsView: React.FC = () => {
               : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
           }`}
         >
-          <Calendar className="w-3.5 h-3.5" />
+          <CalendarIcon className="w-3.5 h-3.5" />
           <span>Monthly Reports</span>
         </button>
 
@@ -175,7 +257,7 @@ export const AcademicsView: React.FC = () => {
               : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
           }`}
         >
-          <Calendar className="w-3.5 h-3.5 text-amber-400" />
+          <CalendarIcon className="w-3.5 h-3.5 text-amber-400" />
           <span>Academic Calendar</span>
         </button>
       </div>
@@ -214,7 +296,6 @@ export const AcademicsView: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Progress Bar */}
                   <div className="space-y-1">
                     <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
                       <div
@@ -256,7 +337,7 @@ export const AcademicsView: React.FC = () => {
               <h2 className="font-semibold text-white text-sm">Monthly Attendance History & Reports</h2>
               <p className="text-xs text-slate-400">Monthly aggregate percentages and session counts</p>
             </div>
-            <Calendar className="w-4 h-4 text-purple-400" />
+            <CalendarIcon className="w-4 h-4 text-purple-400" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -314,52 +395,238 @@ export const AcademicsView: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 4: Academic Calendar & Holidays */}
+      {/* Tab 4: Academic Calendar & Holidays (Full Interactive Visual Grid) */}
       {activeTab === 'calendar' && (
-        <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-4 rounded-2xl">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <h2 className="font-semibold text-white text-sm">Official Campus Academic Calendar</h2>
-              <p className="text-xs text-slate-400">Key exam dates, university holidays, submission deadlines, and campus events</p>
-            </div>
-            <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
-              {calendarEvents.length > 0 ? calendarEvents.length : 4} Upcoming Milestones
-            </span>
-          </div>
+        <div className="space-y-6">
+          <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-5 rounded-2xl">
+            {/* Header with Navigation */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div>
+                <span className="micro-label text-amber-400">Official Schedule</span>
+                <h2 className="font-bold text-white text-lg flex items-center space-x-2 mt-0.5">
+                  <span>{monthNames[viewMonth]} {viewYear}</span>
+                </h2>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            {(calendarEvents.length > 0
-              ? calendarEvents
-              : [
-                  { title: 'Mid-Semester Examinations', category: 'exam', startDate: '2026-09-15', description: 'Institutional mid-term theory and lab evaluations across all departments.' },
-                  { title: 'Ganesh Chaturthi Holiday', category: 'holiday', startDate: '2026-09-07', description: 'Official campus holiday. Classes and administrative offices closed.' },
-                  { title: 'Technical Paper Submission Deadline', category: 'deadline', startDate: '2026-09-25', description: 'Final date for 7th Semester Capstone Project Synopsis approval.' },
-                  { title: 'Annual Hackathon & Tech Fest', category: 'event', startDate: '2026-10-10', description: 'Campus-wide 36-hour hackathon organized by CSI Student Chapter.' },
-                ]
-            ).map((item, idx) => (
-              <div key={item._id || idx} className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className={`px-2.5 py-0.5 text-[10px] font-bold font-mono rounded-full uppercase border ${
-                    item.category === 'holiday'
-                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                      : item.category === 'exam'
-                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                      : item.category === 'deadline'
-                      ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                      : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                  }`}>
-                    {item.category}
-                  </span>
-
-                  <span className="text-[11px] font-mono text-slate-400">
-                    {new Date(item.startDate).toLocaleDateString()}
-                  </span>
+              {/* Category Legend & Month Controls */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="hidden md:flex items-center space-x-2 text-[10px] font-medium text-slate-400 border-r border-slate-800 pr-3">
+                  <span className="flex items-center space-x-1"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /><span>Holiday</span></span>
+                  <span className="flex items-center space-x-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /><span>Exam</span></span>
+                  <span className="flex items-center space-x-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /><span>Deadline</span></span>
+                  <span className="flex items-center space-x-1"><span className="w-2 h-2 rounded-full bg-purple-500 inline-block" /><span>Event</span></span>
                 </div>
 
-                <h3 className="font-bold text-white text-sm">{item.title}</h3>
-                <p className="text-slate-400 text-xs leading-relaxed">{item.description}</p>
+                <div className="flex items-center space-x-1.5 bg-slate-950 border border-slate-800 rounded-xl p-1">
+                  <button
+                    type="button"
+                    onClick={() => setCalendarViewDate(new Date(viewYear, viewMonth - 1, 1))}
+                    className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                    title="Previous Month"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCalendarViewDate(new Date());
+                      setSelectedCalendarDate(new Date().toISOString().split('T')[0]);
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-semibold text-blue-400 hover:text-white rounded-md hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    Today
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCalendarViewDate(new Date(viewYear, viewMonth + 1, 1))}
+                    className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                    title="Next Month"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Visual Calendar Grid */}
+            <div className="space-y-2">
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 text-center border-b border-slate-800 pb-2">
+                {daysOfWeek.map((d, idx) => (
+                  <div key={d} className={`text-xs font-bold ${idx === 0 || idx === 6 ? 'text-amber-400/80' : 'text-slate-400'}`}>
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Grid Cells */}
+              <div className="grid grid-cols-7 gap-1.5">
+                {calendarGrid.map((cell, idx) => {
+                  if (!cell.isCurrentMonth) {
+                    return (
+                      <div
+                        key={idx}
+                        className="min-h-[72px] sm:min-h-[88px] p-1.5 bg-slate-950/30 border border-slate-900/60 rounded-xl text-slate-600 text-xs font-mono select-none"
+                      >
+                        {cell.dayNumber}
+                      </div>
+                    );
+                  }
+
+                  const isSelected = selectedCalendarDate === cell.dateIso;
+                  const hasEvents = cell.events.length > 0;
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCalendarDate(isSelected ? null : cell.dateIso);
+                      }}
+                      className={`min-h-[72px] sm:min-h-[88px] p-1.5 text-left rounded-xl border transition-all duration-150 relative flex flex-col justify-between cursor-pointer group ${
+                        isSelected
+                          ? 'bg-blue-600/15 border-blue-500 shadow-md shadow-blue-500/10'
+                          : cell.isToday
+                          ? 'bg-slate-900 border-blue-500/60'
+                          : hasEvents
+                          ? 'bg-slate-950 hover:bg-slate-800/80 border-slate-800 hover:border-slate-700'
+                          : 'bg-slate-950/80 hover:bg-slate-900 border-slate-800/80'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span
+                          className={`text-xs font-mono font-bold ${
+                            cell.isToday
+                              ? 'w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-[11px]'
+                              : isSelected
+                              ? 'text-blue-400'
+                              : 'text-slate-300 group-hover:text-white'
+                          }`}
+                        >
+                          {cell.dayNumber}
+                        </span>
+
+                        {cell.isToday && (
+                          <span className="text-[9px] font-mono text-blue-400 font-semibold uppercase hidden sm:inline">
+                            Today
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Event Chips / Dots */}
+                      {hasEvents && (
+                        <div className="space-y-1 w-full mt-1">
+                          {cell.events.map((ev: any, evIdx: number) => {
+                            const catColor =
+                              ev.category === 'holiday'
+                                ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                                : ev.category === 'exam'
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                : ev.category === 'deadline'
+                                ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                                : 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+
+                            return (
+                              <div
+                                key={ev._id || evIdx}
+                                className={`hidden sm:block truncate text-[10px] px-1.5 py-0.5 rounded border font-medium ${catColor}`}
+                                title={ev.title}
+                              >
+                                {ev.title}
+                              </div>
+                            );
+                          })}
+
+                          {/* Mobile Dot Indicator */}
+                          <div className="flex sm:hidden items-center space-x-1 pt-1">
+                            {cell.events.map((ev: any, evIdx: number) => (
+                              <span
+                                key={ev._id || evIdx}
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  ev.category === 'holiday'
+                                    ? 'bg-rose-500'
+                                    : ev.category === 'exam'
+                                    ? 'bg-amber-500'
+                                    : ev.category === 'deadline'
+                                    ? 'bg-blue-500'
+                                    : 'bg-purple-500'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Milestones / Event Details Roster */}
+          <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-4 rounded-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="font-semibold text-white text-sm">
+                  {selectedCalendarDate ? `Events for ${selectedCalendarDate}` : 'All Campus Milestones & Events'}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {selectedCalendarDate
+                    ? 'Filtered schedule for selected date'
+                    : 'Upcoming academic exams, holidays, and deadlines'}
+                </p>
+              </div>
+
+              {selectedCalendarDate ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCalendarDate(null)}
+                  className="px-2.5 py-1 text-xs text-slate-400 hover:text-white bg-slate-950 border border-slate-800 rounded-lg flex items-center space-x-1.5 transition cursor-pointer"
+                >
+                  <Filter className="w-3 h-3 text-blue-400" />
+                  <span>Show All Events</span>
+                </button>
+              ) : (
+                <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                  {filteredEvents.length} Active Items
+                </span>
+              )}
+            </div>
+
+            {filteredEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                {filteredEvents.map((item: any, idx: number) => (
+                  <div key={item._id || idx} className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2.5 py-0.5 text-[10px] font-bold font-mono rounded-full uppercase border ${
+                        item.category === 'holiday'
+                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                          : item.category === 'exam'
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          : item.category === 'deadline'
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                          : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                      }`}>
+                        {item.category}
+                      </span>
+
+                      <span className="text-[11px] font-mono text-slate-400">
+                        {new Date(item.startDate).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <h4 className="font-bold text-white text-sm">{item.title}</h4>
+                    <p className="text-slate-400 text-xs leading-relaxed">{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-xs text-slate-500 bg-slate-950 rounded-xl border border-slate-800">
+                No events or exams scheduled for this selected date.
+              </div>
+            )}
           </div>
         </div>
       )}

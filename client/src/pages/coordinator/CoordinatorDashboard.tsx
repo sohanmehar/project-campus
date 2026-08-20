@@ -55,6 +55,7 @@ export const CoordinatorDashboard: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchCoordinatorData();
     fetchCalendarEvents();
   }, []);
 
