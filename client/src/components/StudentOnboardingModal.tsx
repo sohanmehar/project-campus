@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
-import { ShieldAlert, CheckCircle2, Lock, User, Phone, BookOpen, Hash, ArrowRight } from 'lucide-react';
+import { ShieldAlert, Lock, Phone, Hash, ArrowRight } from 'lucide-react';
 
 export const StudentOnboardingModal: React.FC = () => {
   const { user, completeOnboarding, isLoading, error } = useAuthStore();

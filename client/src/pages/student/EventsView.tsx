@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
-import { Calendar, MapPin, Ticket, QrCode, X, UserCheck, Trash2, Plus, ExternalLink, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Ticket, QrCode, X, UserCheck, Trash2, Plus, ExternalLink, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export const EventsView: React.FC = () => {
   const { user } = useAuthStore();
@@ -98,20 +98,6 @@ export const EventsView: React.FC = () => {
       fetchEventsData();
     } finally {
       setProcessingId(null);
-    }
-  };
-
-  const handleCancelRegistration = async (regId: string, eventId?: string) => {
-    try {
-      await axios.delete(`/events/registrations/${regId}`);
-      addToast('info', 'Cancelled', 'Event registration cancelled.');
-      setEvents((prev) =>
-        prev.map((e) => (e._id === eventId || e.registrationId === regId ? { ...e, isRegistered: false } : e))
-      );
-      setRegistrations((prev) => prev.filter((r) => r._id !== regId));
-      fetchEventsData();
-    } catch (err: any) {
-      addToast('error', 'Error', 'Could not cancel registration.');
     }
   };
 

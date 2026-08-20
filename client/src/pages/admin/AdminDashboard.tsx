@@ -3,7 +3,6 @@ import axios from 'axios';
 import { 
   TrendingUp, 
   ShieldCheck, 
-  AlertCircle, 
   Users, 
   Briefcase, 
   Calendar 
@@ -11,8 +10,6 @@ import {
 import { Link } from 'react-router-dom';
 import { 
   ResponsiveContainer, 
-  AreaChart, 
-  Area, 
   XAxis, 
   YAxis, 
   Tooltip,
