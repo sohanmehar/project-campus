@@ -153,8 +153,9 @@ export const Login: React.FC = () => {
             {/* Fast-Pass Demo Fallback */}
             <button
               type="button"
+              disabled={isLoading}
               onClick={handleGoogleDemoLogin}
-              className="w-full py-2 bg-slate-950 hover:bg-slate-850 text-slate-300 border border-slate-800 text-xs font-medium rounded-xl flex items-center justify-center space-x-2 transition cursor-pointer hover:border-slate-700"
+              className="w-full py-2 bg-slate-950 hover:bg-slate-850 text-slate-300 border border-slate-800 text-xs font-medium rounded-xl flex items-center justify-center space-x-2 transition cursor-pointer hover:border-slate-700 disabled:opacity-50"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -249,8 +250,9 @@ export const Login: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
+                disabled={isLoading}
                 onClick={() => handleQuickLogin('alex.student@campusgpt.edu')}
-                className="px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 text-left transition cursor-pointer"
+                className="px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 text-left transition cursor-pointer disabled:opacity-50"
               >
                 <div className="font-semibold text-white text-xs">Student</div>
                 <div className="text-[10px] text-slate-400">Alex Mercer</div>
@@ -258,8 +260,9 @@ export const Login: React.FC = () => {
 
               <button
                 type="button"
+                disabled={isLoading}
                 onClick={() => handleQuickLogin('sarah.faculty@campusgpt.edu')}
-                className="px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 text-left transition cursor-pointer"
+                className="px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 text-left transition cursor-pointer disabled:opacity-50"
               >
                 <div className="font-semibold text-white text-xs">Faculty</div>
                 <div className="text-[10px] text-slate-400">Dr. Jenkins</div>
@@ -267,8 +270,9 @@ export const Login: React.FC = () => {
 
               <button
                 type="button"
+                disabled={isLoading}
                 onClick={() => handleQuickLogin('marcus.coordinator@campusgpt.edu')}
-                className="px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 text-left transition cursor-pointer"
+                className="px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 text-left transition cursor-pointer disabled:opacity-50"
               >
                 <div className="font-semibold text-white text-xs">Coordinator</div>
                 <div className="text-[10px] text-slate-400">Marcus Vance</div>
@@ -276,8 +280,9 @@ export const Login: React.FC = () => {
 
               <button
                 type="button"
+                disabled={isLoading}
                 onClick={() => handleQuickLogin('admin@campusgpt.edu')}
-                className="px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 text-left transition cursor-pointer"
+                className="px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 text-left transition cursor-pointer disabled:opacity-50"
               >
                 <div className="font-semibold text-white text-xs">Admin</div>
                 <div className="text-[10px] text-slate-400">Dr. Thorne</div>

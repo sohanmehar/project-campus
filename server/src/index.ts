@@ -23,10 +23,6 @@ const PORT = process.env.PORT || 5000;
 
 connectDB();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
 // Explicit origins whitelist
 const allowedOrigins = [
   'https://campus-grid-phi-nine.vercel.app',
@@ -35,20 +31,27 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
 ].filter(Boolean) as string[];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, true);
-      }
-    },
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // <--- ADDED 'PATCH' HERE!
-  })
-);
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  optionsSuccessStatus: 200,
+};
+
+// Enable CORS as top-level middleware
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);

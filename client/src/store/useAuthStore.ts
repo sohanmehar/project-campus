@@ -108,7 +108,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         });
       }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Login failed. Invalid credentials.';
+      const errorMsg = err.response?.status === 429
+        ? 'Too many login attempts. Please wait 10 seconds before trying again.'
+        : (err.response?.data?.message || 'Login failed. Invalid credentials.');
       set({
         error: errorMsg,
         user: null,
@@ -144,7 +146,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         });
       }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Google authentication failed.';
+      const errorMsg = err.response?.status === 429
+        ? 'Too many login attempts. Please wait 10 seconds before trying again.'
+        : (err.response?.data?.message || 'Google authentication failed.');
       set({
         error: errorMsg,
         user: null,
