@@ -10,6 +10,7 @@ import {
   TrendingUp,
   ExternalLink,
   Eye,
+  Trash2,
   X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -79,6 +80,17 @@ export const CoordinatorDashboard: React.FC = () => {
       addToast('error', 'Error', err.response?.data?.message || 'Could not add calendar item.');
     } finally {
       setAddingCal(false);
+    }
+  };
+
+  const handleDeleteCalendarItem = async (id: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete '${title}'?`)) return;
+    try {
+      await axios.delete(`/calendar/${id}`);
+      addToast('info', 'Deleted', `'${title}' deleted from official calendar.`);
+      fetchCalendarEvents();
+    } catch (err: any) {
+      addToast('error', 'Error', err.response?.data?.message || 'Could not delete calendar item.');
     }
   };
 
@@ -352,27 +364,48 @@ export const CoordinatorDashboard: React.FC = () => {
 
       {/* Academic Calendar Manager Card for Coordinators */}
       <div className="stitch-card p-4 sm:p-6 bg-slate-900 border-slate-800 space-y-4 rounded-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div>
             <h2 className="font-semibold text-white text-sm">Academic Calendar & Holiday Manager</h2>
             <p className="text-xs text-slate-400">Post university holidays, exam schedules, and academic milestones</p>
           </div>
-          <button
-            onClick={() => setIsCalendarModalOpen(true)}
-            className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition shadow-lg shadow-purple-600/20 cursor-pointer"
-          >
-            <span>+ Add Calendar Event</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <Link
+              to="/calendar"
+              className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-purple-400 border border-slate-800 text-xs font-semibold rounded-xl flex items-center space-x-1 transition cursor-pointer"
+            >
+              <span>Visual Calendar View</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+
+            <button
+              onClick={() => setIsCalendarModalOpen(true)}
+              className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition shadow-lg shadow-purple-600/20 cursor-pointer"
+            >
+              <span>+ Add Calendar Event</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {calendarEvents.map((item, idx) => (
-            <div key={item._id || idx} className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1 text-xs">
+            <div key={item._id || idx} className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1 text-xs relative group">
               <div className="flex items-center justify-between">
                 <span className="px-2 py-0.5 text-[9px] font-bold font-mono rounded uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">
                   {item.category}
                 </span>
-                <span className="text-[10px] font-mono text-slate-400">{new Date(item.startDate).toLocaleDateString()}</span>
+                <div className="flex items-center space-x-1">
+                  <span className="text-[10px] font-mono text-slate-400">{new Date(item.startDate).toLocaleDateString()}</span>
+                  {item._id && !item._id.startsWith('default-') && (
+                    <button
+                      onClick={() => handleDeleteCalendarItem(item._id, item.title)}
+                      className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition cursor-pointer ml-1"
+                      title="Delete item"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="font-bold text-white text-xs mt-1">{item.title}</div>
               <p className="text-slate-400 text-[11px] line-clamp-2">{item.description}</p>

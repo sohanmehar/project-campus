@@ -45,6 +45,9 @@ import { FacultyGradeAssignmentsView } from './pages/faculty/FacultyGradeAssignm
 // Coordinator Pages
 import { CoordinatorDashboard } from './pages/coordinator/CoordinatorDashboard';
 
+// Common Shared Pages
+import { AcademicCalendarView } from './pages/common/AcademicCalendarView';
+
 // 1. Protected Route Wrapper (Redirects unauthenticated users to /login)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -155,6 +158,7 @@ export default function App() {
                       )
                     }
                   />
+                  <Route path="/calendar" element={<AcademicCalendarView />} />
                   <Route
                     path="/assignments"
                     element={

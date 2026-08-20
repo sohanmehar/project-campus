@@ -34,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const studentNav = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'academics', label: 'Academics & Attendance', icon: BookOpen },
+    { id: 'calendar', label: 'Academic Calendar', icon: Calendar },
     { id: 'assignments', label: 'Assignments', icon: FileCheck },
     { id: 'notices', label: 'Notices & Materials', icon: FileText },
     { id: 'placements', label: 'Placement Drives', icon: Briefcase },
@@ -50,6 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'students', label: 'Student Registry', icon: Users },
     { id: 'faculty', label: 'Faculty Registry', icon: UserCheck },
     { id: 'academics', label: 'Academic Structure', icon: BookOpen },
+    { id: 'calendar', label: 'Academic Calendar', icon: Calendar },
     { id: 'placements', label: 'Placement Drives', icon: Briefcase },
     { id: 'events', label: 'Campus Events & Passes', icon: Calendar },
     { id: 'ai-analytics', label: 'AI Platform Metrics', icon: Sparkles },
@@ -59,6 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const facultyNav = [
     { id: 'dashboard', label: 'Faculty Command', icon: LayoutDashboard },
     { id: 'academics', label: 'Course Catalog', icon: BookOpen },
+    { id: 'calendar', label: 'Academic Calendar', icon: Calendar },
     { id: 'attendance', label: 'Take Attendance', icon: Calendar },
     { id: 'assignments', label: 'Grade Assignments', icon: FileCheck },
     { id: 'notices', label: 'Notices & Study Materials', icon: FileText },
@@ -67,6 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const coordinatorNav = [
     { id: 'dashboard', label: 'Activity Command', icon: LayoutDashboard },
+    { id: 'calendar', label: 'Academic Calendar', icon: Calendar },
     { id: 'events', label: 'Campus Events & Passes', icon: Calendar },
     { id: 'clubs', label: 'Clubs & Societies', icon: Users },
     { id: 'notices', label: 'Announcements', icon: FileText },
