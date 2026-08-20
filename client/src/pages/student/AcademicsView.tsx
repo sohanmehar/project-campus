@@ -10,10 +10,17 @@ export const AcademicsView: React.FC = () => {
   const [totalLectures, setTotalLectures] = useState(0);
   const [subjectAnalytics, setSubjectAnalytics] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'subjects' | 'monthly' | 'calculator' | 'calendar'>('subjects');
-  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<any[]>(() => {
+    try {
+      const raw = localStorage.getItem('campusgpt_academic_calendar_events_v1');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Visual Calendar Grid State
-  const [calendarViewDate, setCalendarViewDate] = useState(new Date(2026, 8, 1)); // September 2026 default
+  const [calendarViewDate, setCalendarViewDate] = useState(new Date(2026, 7, 1)); // August 2026 default
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,8 +37,15 @@ export const AcademicsView: React.FC = () => {
           setSubjectAnalytics(res.value.data.subjectAnalytics || []);
         }
 
-        if (calRes.status === 'fulfilled' && calRes.value.data?.data) {
-          setCalendarEvents(calRes.value.data.data);
+        if (calRes.status === 'fulfilled' && calRes.value.data?.data && Array.isArray(calRes.value.data.data)) {
+          const dbEvents = calRes.value.data.data;
+          const storedRaw = localStorage.getItem('campusgpt_academic_calendar_events_v1');
+          const storedEvents = storedRaw ? JSON.parse(storedRaw) : [];
+          const dbIds = new Set(dbEvents.map((e: any) => String(e._id || e.id)));
+          const localOnly = storedEvents.filter((item: any) => !dbIds.has(String(item._id || item.id)));
+          const merged = [...dbEvents, ...localOnly];
+          setCalendarEvents(merged);
+          localStorage.setItem('campusgpt_academic_calendar_events_v1', JSON.stringify(merged));
         }
       } catch (err) {
         console.error('Error fetching student academic data', err);

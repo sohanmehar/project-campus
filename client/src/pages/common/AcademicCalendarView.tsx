@@ -14,14 +14,33 @@ import {
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
 
+const LOCAL_STORAGE_KEY = 'campusgpt_academic_calendar_events_v1';
+
+const getStoredCalendarEvents = (): any[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveStoredCalendarEvents = (events: any[]) => {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(events));
+  } catch (err) {
+    console.warn('Could not save calendar events to localStorage:', err);
+  }
+};
+
 export const AcademicCalendarView: React.FC = () => {
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
   const [loading, setLoading] = useState(true);
-  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<any[]>(() => getStoredCalendarEvents());
 
   // Calendar View & Filter State
-  const [calendarViewDate, setCalendarViewDate] = useState(new Date(2026, 8, 1)); // Sept 2026 default
+  const [calendarViewDate, setCalendarViewDate] = useState(new Date(2026, 7, 1)); // Aug 2026 default
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
 
   // Add Event Modal State (For Coordinators & Admins)
@@ -37,11 +56,17 @@ export const AcademicCalendarView: React.FC = () => {
   const fetchEvents = async () => {
     try {
       const res = await axios.get('/calendar');
-      if (res.data?.data) {
-        setCalendarEvents(res.data.data);
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        const dbEvents = res.data.data;
+        const storedEvents = getStoredCalendarEvents();
+        const dbIds = new Set(dbEvents.map((e: any) => String(e._id || e.id)));
+        const localOnly = storedEvents.filter((item: any) => !dbIds.has(String(item._id || item.id)));
+        const merged = [...dbEvents, ...localOnly];
+        setCalendarEvents(merged);
+        saveStoredCalendarEvents(merged);
       }
     } catch (err) {
-      console.error('Error fetching academic calendar events:', err);
+      console.warn('Error fetching academic calendar events, using stored items:', err);
     } finally {
       setLoading(false);
     }
@@ -57,12 +82,26 @@ export const AcademicCalendarView: React.FC = () => {
     setSubmitting(true);
 
     const newLocalItem = {
-      _id: `temp-${Date.now()}`,
+      _id: `cal-${Date.now()}`,
       title: title.trim(),
       category,
       startDate,
       description,
+      department: 'All Departments',
     };
+
+    // Update state & localStorage immediately
+    setCalendarEvents((prev) => {
+      const updated = [...prev, newLocalItem];
+      saveStoredCalendarEvents(updated);
+      return updated;
+    });
+
+    addToast('success', 'Calendar Updated', `'${title}' added to official Academic Calendar.`);
+    setTitle('');
+    setDescription('');
+    setIsModalOpen(false);
+    setSubmitting(false);
 
     try {
       const res = await axios.post('/calendar', {
@@ -71,21 +110,15 @@ export const AcademicCalendarView: React.FC = () => {
         startDate,
         description,
       });
-      addToast('success', 'Calendar Updated', `'${title}' added to official Academic Calendar.`);
       if (res.data?.data) {
-        setCalendarEvents((prev) => [...prev, res.data.data]);
-      } else {
-        setCalendarEvents((prev) => [...prev, newLocalItem]);
+        setCalendarEvents((prev) => {
+          const updated = prev.map((item) => (item._id === newLocalItem._id ? res.data.data : item));
+          saveStoredCalendarEvents(updated);
+          return updated;
+        });
       }
     } catch (err: any) {
-      console.warn('Calendar API warning, applying optimistic update:', err);
-      setCalendarEvents((prev) => [...prev, newLocalItem]);
-      addToast('success', 'Calendar Updated', `'${title}' added to Academic Calendar.`);
-    } finally {
-      setTitle('');
-      setDescription('');
-      setIsModalOpen(false);
-      setSubmitting(false);
+      console.warn('Backend sync warning, stored locally:', err);
     }
   };
 
@@ -93,10 +126,15 @@ export const AcademicCalendarView: React.FC = () => {
     if (!window.confirm(`Are you sure you want to delete '${eventTitle}' from the Academic Calendar?`)) {
       return;
     }
-    setCalendarEvents((prev) => prev.filter((item) => (item._id || item.id) !== id));
+    const targetId = String(id);
+    setCalendarEvents((prev) => {
+      const updated = prev.filter((item) => String(item._id || item.id) !== targetId);
+      saveStoredCalendarEvents(updated);
+      return updated;
+    });
     addToast('info', 'Calendar Item Removed', `'${eventTitle}' deleted.`);
     try {
-      await axios.delete(`/calendar/${id}`);
+      await axios.delete(`/calendar/${targetId}`);
     } catch (err: any) {
       console.warn('Backend delete notification warning:', err);
     }

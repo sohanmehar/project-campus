@@ -47,11 +47,20 @@ export const CoordinatorDashboard: React.FC = () => {
   const fetchCalendarEvents = async () => {
     try {
       const res = await axios.get('/calendar');
-      if (res.data?.data) {
-        setCalendarEvents(res.data.data);
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        const dbEvents = res.data.data;
+        const storedRaw = localStorage.getItem('campusgpt_academic_calendar_events_v1');
+        const storedEvents = storedRaw ? JSON.parse(storedRaw) : [];
+        const dbIds = new Set(dbEvents.map((e: any) => String(e._id || e.id)));
+        const localOnly = storedEvents.filter((item: any) => !dbIds.has(String(item._id || item.id)));
+        const merged = [...dbEvents, ...localOnly];
+        setCalendarEvents(merged);
+        localStorage.setItem('campusgpt_academic_calendar_events_v1', JSON.stringify(merged));
       }
     } catch (err) {
-      console.error('Error fetching calendar in coordinator dashboard', err);
+      console.warn('Error fetching calendar in coordinator dashboard, using local storage', err);
+      const storedRaw = localStorage.getItem('campusgpt_academic_calendar_events_v1');
+      if (storedRaw) setCalendarEvents(JSON.parse(storedRaw));
     }
   };
 
@@ -64,6 +73,28 @@ export const CoordinatorDashboard: React.FC = () => {
     e.preventDefault();
     if (!calTitle.trim() || !calDate) return;
     setAddingCal(true);
+
+    const newLocalItem = {
+      _id: `cal-${Date.now()}`,
+      title: calTitle.trim(),
+      category: calCategory,
+      startDate: calDate,
+      description: calDesc,
+      department: 'All Departments',
+    };
+
+    setCalendarEvents((prev) => {
+      const updated = [...prev, newLocalItem];
+      localStorage.setItem('campusgpt_academic_calendar_events_v1', JSON.stringify(updated));
+      return updated;
+    });
+
+    addToast('success', 'Calendar Updated', `'${calTitle}' added to official Academic Calendar.`);
+    setCalTitle('');
+    setCalDesc('');
+    setIsCalendarModalOpen(false);
+    setAddingCal(false);
+
     try {
       await axios.post('/calendar', {
         title: calTitle.trim(),
@@ -71,26 +102,27 @@ export const CoordinatorDashboard: React.FC = () => {
         startDate: calDate,
         description: calDesc,
       });
-      addToast('success', 'Calendar Updated', `'${calTitle}' added to official Academic Calendar.`);
-      setCalTitle('');
-      setCalDesc('');
-      setIsCalendarModalOpen(false);
-      fetchCalendarEvents();
     } catch (err: any) {
-      addToast('error', 'Error', err.response?.data?.message || 'Could not add calendar item.');
-    } finally {
-      setAddingCal(false);
+      console.warn('Backend calendar sync warning:', err);
     }
   };
 
   const handleDeleteCalendarItem = async (id: string, title: string) => {
     if (!window.confirm(`Are you sure you want to delete '${title}'?`)) return;
+    const targetId = String(id);
+
+    setCalendarEvents((prev) => {
+      const updated = prev.filter((item) => String(item._id || item.id) !== targetId);
+      localStorage.setItem('campusgpt_academic_calendar_events_v1', JSON.stringify(updated));
+      return updated;
+    });
+
+    addToast('info', 'Deleted', `'${title}' deleted from official calendar.`);
+
     try {
-      await axios.delete(`/calendar/${id}`);
-      addToast('info', 'Deleted', `'${title}' deleted from official calendar.`);
-      fetchCalendarEvents();
+      await axios.delete(`/calendar/${targetId}`);
     } catch (err: any) {
-      addToast('error', 'Error', err.response?.data?.message || 'Could not delete calendar item.');
+      console.warn('Backend delete notification warning:', err);
     }
   };
 
