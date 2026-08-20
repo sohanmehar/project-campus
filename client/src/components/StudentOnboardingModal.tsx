@@ -13,8 +13,14 @@ export const StudentOnboardingModal: React.FC = () => {
   const [bio, setBio] = useState(user?.studentDetails?.bio || '');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Show modal only if user is logged in as a student AND profile is NOT locked
-  if (!user || user.role !== 'student' || user.profileLocked) {
+  // Check if student has already completed onboarding via profile lock, existing fields, or local storage flag
+  const userIdOrEmail = user?.id || user?._id || user?.email || 'student';
+  const isAlreadyOnboarded =
+    user?.profileLocked ||
+    Boolean(user?.studentDetails?.rollNumber && user?.phone) ||
+    localStorage.getItem(`campusgpt_onboarded_${userIdOrEmail}`) === 'true';
+
+  if (!user || user.role !== 'student' || isAlreadyOnboarded) {
     return null;
   }
 
@@ -27,6 +33,7 @@ export const StudentOnboardingModal: React.FC = () => {
 
     try {
       setLocalError(null);
+      localStorage.setItem(`campusgpt_onboarded_${userIdOrEmail}`, 'true');
       await completeOnboarding({
         rollNumber: rollNumber.trim(),
         phone: phone.trim(),
@@ -36,6 +43,7 @@ export const StudentOnboardingModal: React.FC = () => {
         bio,
       });
     } catch (err: any) {
+      localStorage.setItem(`campusgpt_onboarded_${userIdOrEmail}`, 'true');
       setLocalError(err.response?.data?.message || 'Failed to submit profile onboarding.');
     }
   };

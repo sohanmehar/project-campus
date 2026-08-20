@@ -224,9 +224,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       if (response.data?.user) {
         const rawUser = response.data.user;
+        const userId = (rawUser.id || rawUser._id || '').toString();
+        const isLocallyOnboarded =
+          localStorage.getItem(`campusgpt_onboarded_${userId}`) === 'true' ||
+          localStorage.getItem(`campusgpt_onboarded_${rawUser.email}`) === 'true';
+
         const user = {
           ...rawUser,
-          id: (rawUser.id || rawUser._id || '').toString(),
+          id: userId,
+          profileLocked:
+            rawUser.profileLocked ||
+            isLocallyOnboarded ||
+            Boolean(rawUser.studentDetails?.rollNumber && rawUser.phone),
         };
         set({
           user,
