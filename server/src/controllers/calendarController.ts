@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import AcademicCalendar from '../models/AcademicCalendar';
 
 export const getCalendarEvents = async (req: Request, res: Response): Promise<void> => {
@@ -18,19 +19,31 @@ export const createCalendarEvent = async (req: Request, res: Response): Promise<
       return;
     }
 
-    const newEvent = await AcademicCalendar.create({
-      title,
-      category: category || 'event',
-      startDate,
-      endDate: endDate || startDate,
-      description: description || '',
+    const userId = (req as any).user?.id || (req as any).user?._id;
+    const validCreatedBy = userId && mongoose.Types.ObjectId.isValid(userId) ? userId : undefined;
+
+    const parsedStartDate = new Date(startDate);
+    const parsedEndDate = endDate ? new Date(endDate) : parsedStartDate;
+
+    const eventData: any = {
+      title: String(title).trim(),
+      category: ['holiday', 'exam', 'event', 'deadline'].includes(category) ? category : 'event',
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
+      description: description ? String(description).trim() : '',
       department: department || 'All Departments',
-      createdBy: (req as any).user?._id,
-    });
+    };
+
+    if (validCreatedBy) {
+      eventData.createdBy = validCreatedBy;
+    }
+
+    const newEvent = await AcademicCalendar.create(eventData);
 
     res.status(201).json({ success: true, message: 'Academic calendar item added.', data: newEvent });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to create calendar event.', error: error.message });
+    console.error('Error creating calendar event:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to create calendar event.' });
   }
 };
 
