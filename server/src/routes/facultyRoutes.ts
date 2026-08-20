@@ -13,6 +13,7 @@ import {
   getNotices,
   deleteNotice,
   addFacultyCourse,
+  getFacultyCourses,
   deleteFacultyCourse,
   updateCourseSyllabus
 } from '../controllers/facultyController';
@@ -43,6 +44,7 @@ router.patch('/submissions/:id/grade', requireRole(['faculty', 'admin']), gradeS
 router.post('/notices', requireRole(['faculty', 'admin', 'coordinator']), createNotice);
 router.get('/notices', getNotices);
 router.delete('/notices/:id', requireRole(['faculty', 'admin', 'coordinator']), deleteNotice);
+router.get('/courses', requireRole(['faculty', 'admin']), getFacultyCourses);
 router.post('/courses', requireRole(['faculty', 'admin']), addFacultyCourse);
 router.delete('/courses/:code', requireRole(['faculty', 'admin']), deleteFacultyCourse);
 router.put('/courses/:code/syllabus', requireRole(['faculty', 'admin']), updateCourseSyllabus);
