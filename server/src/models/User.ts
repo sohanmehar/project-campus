@@ -13,7 +13,6 @@ export interface IUser extends Document {
   department: string;
   avatarUrl?: string;
   isVerified: boolean;
-  isProfileLocked: boolean;
   studentDetails?: {
     rollNumber: string;
     phone?: string;
@@ -54,7 +53,6 @@ const UserSchema: Schema = new Schema(
     phone: { type: String, default: '' },
     avatarUrl: { type: String, default: '' },
     isVerified: { type: Boolean, default: true },
-    isProfileLocked: { type: Boolean, default: false },
     studentDetails: {
       rollNumber: { type: String, sparse: true },
       phone: { type: String, default: '' },

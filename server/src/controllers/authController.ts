@@ -138,7 +138,6 @@ export const login = async (req: Request, res: Response) => {
         role: user.role,
         department: user.department,
         avatarUrl: user.avatarUrl,
-        isProfileLocked: user.isProfileLocked || false,
         studentDetails: user.studentDetails,
       },
     });
@@ -227,7 +226,6 @@ export const googleLogin = async (req: Request, res: Response) => {
         role: user.role,
         department: user.department,
         avatarUrl: user.avatarUrl,
-        isProfileLocked: user.isProfileLocked || false,
         studentDetails: user.studentDetails,
         facultyDetails: user.facultyDetails,
       },
@@ -297,13 +295,6 @@ export const updateStudentProfile = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'User record not found.' });
     }
 
-    // Security Check: If student's profile is locked, prevent edits unless requested by admin
-    if (user.role === 'student' && user.isProfileLocked && (req.user as any)?.role !== 'admin') {
-      return res.status(403).json({
-        message: 'Student profile details are locked after initial submission. Please contact Admin for any official changes.',
-      });
-    }
-
     // Update department if provided
     if (department && String(department).trim()) {
       user.department = String(department).trim();
@@ -363,55 +354,6 @@ export const updateStudentProfile = async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error updating profile', error: error.message });
-  }
-};
-
-// @desc    First-Time Student Onboarding Profile Completion
-// @route   POST /api/v1/auth/onboarding
-// @access  Private (Student)
-export const completeStudentOnboarding = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized user.' });
-    }
-
-    const { rollNumber, department, phone, semester, bio, skills, linkedinUrl, githubUrl } = req.body;
-
-    if (!rollNumber || !phone || !department) {
-      return res.status(400).json({ message: 'Roll number, department, and phone number are required to complete setup.' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User record not found.' });
-    }
-
-    user.department = department.trim();
-    user.phone = phone.trim();
-    user.isProfileLocked = true; // Lock profile upon completing onboarding
-
-    user.studentDetails = {
-      rollNumber: rollNumber.trim(),
-      phone: phone.trim(),
-      semester: Number(semester) || 1,
-      cgpa: user.studentDetails?.cgpa || 8.5,
-      skills: Array.isArray(skills) ? skills : (skills ? skills.split(',').map((s: string) => s.trim()) : ['Web Dev']),
-      bio: bio ? bio.trim() : 'Student at CampusGPT',
-      linkedinUrl: linkedinUrl || '',
-      githubUrl: githubUrl || '',
-      resumeUrl: user.studentDetails?.resumeUrl || '',
-    };
-
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'First-time onboarding completed! Your student profile is now locked.',
-      user,
-    });
-  } catch (error: any) {
-    return res.status(500).json({ message: 'Onboarding submission failed', error: error.message });
   }
 };
 

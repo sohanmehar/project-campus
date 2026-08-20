@@ -6,7 +6,6 @@ import {
   logout, 
   getMe, 
   updateStudentProfile,
-  completeStudentOnboarding,
   forgotPassword,
   resetPassword
 } from '../controllers/authController';
@@ -25,6 +24,5 @@ router.post('/reset-password', resetPassword);
 // Protected routes (Requires valid JWT token)
 router.get('/me', authenticateToken, getMe);
 router.put('/profile', authenticateToken, updateStudentProfile);
-router.post('/onboarding', authenticateToken, completeStudentOnboarding);
 
 export default router;

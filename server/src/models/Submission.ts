@@ -11,8 +11,6 @@ export interface ISubmission extends Document {
   marksObtained?: number | null;
   totalMarks?: number;
   feedback?: string;
-  isReopened?: boolean;
-  reopenedUntil?: Date;
 }
 
 const SubmissionSchema: Schema = new Schema(
@@ -27,8 +25,6 @@ const SubmissionSchema: Schema = new Schema(
     marksObtained: { type: Number, default: null },
     totalMarks: { type: Number, default: 100 },
     feedback: { type: String, default: '' },
-    isReopened: { type: Boolean, default: false },
-    reopenedUntil: { type: Date, default: null },
   },
   { timestamps: true }
 );

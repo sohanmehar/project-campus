@@ -79,41 +79,17 @@ export const getStudentAttendanceSummary = async (req: AuthRequest, res: Respons
 // @access  Private (Faculty/Admin)
 export const createAttendanceSession = async (req: AuthRequest, res: Response) => {
   try {
-    const { courseId, subject, slot, date, records } = req.body;
+    const { courseId, date, records } = req.body;
     const facultyId = req.user?.id;
 
-    if ((!courseId && !subject) || !records || !Array.isArray(records)) {
-      return res.status(400).json({ message: 'Missing courseId/subject or student records payload.' });
+    if (!courseId || !records || !Array.isArray(records)) {
+      return res.status(400).json({ message: 'Missing courseId or student records payload.' });
     }
-
-    const sessionDate = date ? new Date(date) : new Date();
-    const startOfDay = new Date(new Date(sessionDate).setHours(0, 0, 0, 0));
-    const endOfDay = new Date(new Date(sessionDate).setHours(23, 59, 59, 999));
-
-    // Constraint: Only ONE attendance session per class/subject per day
-    const existingSession = await AttendanceSession.findOne({
-      $or: [{ courseId: courseId || null }, { subject: subject || '' }],
-      date: { $gte: startOfDay, $lte: endOfDay },
-    });
-
-    if (existingSession) {
-      return res.status(400).json({
-        message: 'Attendance Constraint: Attendance for this class has already been logged for today.',
-      });
-    }
-
-    const user = await User.findById(facultyId);
-    const facultyName = user?.name || 'Faculty Instructor';
-    const department = user?.department || 'Computer Science';
 
     const session = new AttendanceSession({
-      courseId: courseId || undefined,
+      courseId,
       facultyId,
-      facultyName,
-      subject: subject || 'Class Lecture',
-      department,
-      slot: slot || '10:00 AM - 11:00 AM',
-      date: sessionDate,
+      date: date || new Date(),
       records,
     });
 
@@ -126,44 +102,6 @@ export const createAttendanceSession = async (req: AuthRequest, res: Response) =
     });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error recording attendance session', error: error.message });
-  }
-};
-
-// @desc    Update class attendance session (Locked after calendar day passes)
-// @route   PUT /api/v1/attendance/sessions/:id
-// @access  Private (Faculty/Admin)
-export const updateAttendanceSession = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { records } = req.body;
-
-    const session = await AttendanceSession.findById(id);
-    if (!session) {
-      return res.status(404).json({ message: 'Attendance session not found.' });
-    }
-
-    // Constraint: No editing attendance after the calendar date has passed
-    const sessionDate = new Date(session.date);
-    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
-
-    if (sessionDate < todayStart && (req.user as any)?.role !== 'admin') {
-      return res.status(403).json({
-        message: 'Attendance Constraint: Attendance logs cannot be edited after the calendar date has passed.',
-      });
-    }
-
-    if (records && Array.isArray(records)) {
-      session.records = records;
-      await session.save();
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Attendance records updated successfully.',
-      session,
-    });
-  } catch (error: any) {
-    return res.status(500).json({ message: 'Error updating attendance session', error: error.message });
   }
 };
 
