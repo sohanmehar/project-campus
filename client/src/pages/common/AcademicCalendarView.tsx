@@ -68,7 +68,8 @@ export const AcademicCalendarView: React.FC = () => {
       setIsModalOpen(false);
       fetchEvents();
     } catch (err: any) {
-      addToast('error', 'Error', err.response?.data?.message || 'Failed to add calendar item.');
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to add calendar item.';
+      addToast('error', 'Error', errorMsg);
     } finally {
       setSubmitting(false);
     }

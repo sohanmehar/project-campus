@@ -33,8 +33,10 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
 
 export const requireRole = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Forbidden: Insufficient privileges' });
+    const userRole = (req.user?.role || '').toLowerCase();
+    const allowed = roles.map((r) => r.toLowerCase());
+    if (!req.user || !allowed.includes(userRole)) {
+      return res.status(403).json({ message: `Forbidden: Requires one of [${roles.join(', ')}] roles.` });
     }
     next();
   };
