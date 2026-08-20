@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 import { ShieldAlert, Lock, Phone, Hash, ArrowRight } from 'lucide-react';
 
@@ -8,10 +9,35 @@ export const StudentOnboardingModal: React.FC = () => {
   const [rollNumber, setRollNumber] = useState(user?.studentDetails?.rollNumber || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [department, setDepartment] = useState(user?.department || 'Computer Science & Engineering');
+  const [dbDepartments, setDbDepartments] = useState<string[]>([]);
   const [semester, setSemester] = useState(user?.studentDetails?.semester || 1);
   const [skills, setSkills] = useState(user?.studentDetails?.skills ? user.studentDetails.skills.join(', ') : '');
   const [bio, setBio] = useState(user?.studentDetails?.bio || '');
   const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await axios.get('/admin/departments');
+        if (res.data?.departments && Array.isArray(res.data.departments)) {
+          const names = res.data.departments.map((d: any) => d.name).filter(Boolean);
+          if (names.length > 0) {
+            setDbDepartments(names);
+            if (!user?.department) {
+              setDepartment(names[0]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch departments from database:', err);
+      }
+    };
+    fetchDepartments();
+  }, [user?.department]);
+
+  const availableDepartments = dbDepartments.length > 0
+    ? dbDepartments
+    : ['Computer Science & Engineering', 'Electronics & Telecommunication'];
 
   // Check if student has already completed onboarding via profile lock, existing fields, or local storage flag
   const userIdOrEmail = user?.id || user?.email || 'student';
@@ -111,12 +137,11 @@ export const StudentOnboardingModal: React.FC = () => {
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-blue-500 focus:outline-none"
               >
-                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
-                <option value="Information Science & Engineering">Information Science & Engineering</option>
-                <option value="Electronics & Communication">Electronics & Communication</option>
-                <option value="Mechanical Engineering">Mechanical Engineering</option>
-                <option value="Civil Engineering">Civil Engineering</option>
-                <option value="Artificial Intelligence & Data Science">AI & Data Science</option>
+                {availableDepartments.map((deptName) => (
+                  <option key={deptName} value={deptName}>
+                    {deptName}
+                  </option>
+                ))}
               </select>
             </div>
 
