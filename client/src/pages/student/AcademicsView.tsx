@@ -77,14 +77,7 @@ export const AcademicsView: React.FC = () => {
   const totalDaysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
 
-  const defaultCalendarEvents = [
-    { _id: 'default-1', title: 'Mid-Semester Examinations', category: 'exam', startDate: '2026-09-15', description: 'Institutional mid-term theory and lab evaluations across all departments.' },
-    { _id: 'default-2', title: 'Ganesh Chaturthi Holiday', category: 'holiday', startDate: '2026-09-07', description: 'Official campus holiday. Classes and administrative offices closed.' },
-    { _id: 'default-3', title: 'Technical Paper Submission Deadline', category: 'deadline', startDate: '2026-09-25', description: 'Final date for 7th Semester Capstone Project Synopsis approval.' },
-    { _id: 'default-4', title: 'Annual Hackathon & Tech Fest', category: 'event', startDate: '2026-10-10', description: 'Campus-wide 36-hour hackathon organized by CSI Student Chapter.' },
-  ];
-
-  const activeEventsList = calendarEvents.length > 0 ? calendarEvents : defaultCalendarEvents;
+  const activeEventsList = calendarEvents;
 
   // Group events by YYYY-MM-DD
   const eventsByDateMap = activeEventsList.reduce((acc: Record<string, any[]>, item: any) => {

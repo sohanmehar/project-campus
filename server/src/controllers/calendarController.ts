@@ -7,15 +7,30 @@ let inMemoryCalendarEvents: any[] = [];
 
 export const getCalendarEvents = async (req: Request, res: Response): Promise<void> => {
   try {
-    const events = await AcademicCalendar.find().sort({ startDate: 1 });
-    if (events.length === 0 && inMemoryCalendarEvents.length > 0) {
-      res.status(200).json({ success: true, count: inMemoryCalendarEvents.length, data: inMemoryCalendarEvents });
-      return;
+    let events: any[] = await AcademicCalendar.find().sort({ startDate: 1 });
+
+    // Auto-seed initial calendar milestones if database collection is empty
+    if (events.length === 0 && inMemoryCalendarEvents.length === 0) {
+      const initialSeedItems = [
+        { title: 'Mid-Semester Examinations', category: 'exam' as const, startDate: new Date('2026-09-15'), description: 'Institutional mid-term theory and lab evaluations across all departments.', department: 'All Departments' },
+        { title: 'Ganesh Chaturthi Holiday', category: 'holiday' as const, startDate: new Date('2026-09-07'), description: 'Official campus holiday. Classes and administrative offices closed.', department: 'All Departments' },
+        { title: 'Technical Paper Submission Deadline', category: 'deadline' as const, startDate: new Date('2026-09-25'), description: 'Final date for 7th Semester Capstone Project Synopsis approval.', department: 'All Departments' },
+        { title: 'Annual Hackathon & Tech Fest', category: 'event' as const, startDate: new Date('2026-10-10'), description: 'Campus-wide 36-hour hackathon organized by CSI Student Chapter.', department: 'All Departments' },
+      ];
+
+      try {
+        events = await AcademicCalendar.insertMany(initialSeedItems);
+      } catch (seedErr) {
+        console.warn('Database auto-seed warning, using fallback list:', seedErr);
+        inMemoryCalendarEvents = initialSeedItems.map((item, idx) => ({
+          _id: `seed-${idx + 1}`,
+          ...item,
+        }));
+      }
     }
 
-    // Merge DB events with in-memory fallback events without duplicates
     const dbIds = new Set(events.map((e) => e._id.toString()));
-    const extraInMemory = inMemoryCalendarEvents.filter((item) => !dbIds.has(item._id.toString()));
+    const extraInMemory = inMemoryCalendarEvents.filter((item) => !dbIds.has(String(item._id || item.id)));
     const combined = [...events, ...extraInMemory];
 
     res.status(200).json({ success: true, count: combined.length, data: combined });
@@ -78,17 +93,22 @@ export const createCalendarEvent = async (req: Request, res: Response): Promise<
 
 export const updateCalendarEvent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const targetId = String(req.params.id || '');
     let updated: any;
     try {
-      updated = await AcademicCalendar.findByIdAndUpdate(id, req.body, { new: true });
-    } catch (dbErr) {
-      const idx = inMemoryCalendarEvents.findIndex((item) => (item._id || item.id) === id);
-      if (idx !== -1) {
-        inMemoryCalendarEvents[idx] = { ...inMemoryCalendarEvents[idx], ...req.body };
-        updated = inMemoryCalendarEvents[idx];
+      if (mongoose.Types.ObjectId.isValid(targetId)) {
+        updated = await AcademicCalendar.findByIdAndUpdate(targetId, req.body, { new: true });
       }
+    } catch (dbErr) {
+      console.warn('MongoDB update warning:', dbErr);
     }
+
+    const idx = inMemoryCalendarEvents.findIndex((item) => String(item._id || item.id) === targetId);
+    if (idx !== -1) {
+      inMemoryCalendarEvents[idx] = { ...inMemoryCalendarEvents[idx], ...req.body };
+      if (!updated) updated = inMemoryCalendarEvents[idx];
+    }
+
     res.status(200).json({ success: true, message: 'Calendar event updated.', data: updated || req.body });
   } catch (error: any) {
     res.status(500).json({ success: false, message: 'Failed to update calendar event.', error: error.message });
@@ -97,13 +117,16 @@ export const updateCalendarEvent = async (req: Request, res: Response): Promise<
 
 export const deleteCalendarEvent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const targetId = String(req.params.id || '');
     try {
-      await AcademicCalendar.findByIdAndDelete(id);
+      if (mongoose.Types.ObjectId.isValid(targetId)) {
+        await AcademicCalendar.findByIdAndDelete(targetId);
+      }
     } catch (dbErr) {
-      console.warn('MongoDB AcademicCalendar.findByIdAndDelete fallback:', dbErr);
+      console.warn('MongoDB delete warning:', dbErr);
     }
-    inMemoryCalendarEvents = inMemoryCalendarEvents.filter((item) => (item._id || item.id) !== id);
+
+    inMemoryCalendarEvents = inMemoryCalendarEvents.filter((item) => String(item._id || item.id) !== targetId);
     res.status(200).json({ success: true, message: 'Calendar event removed.' });
   } catch (error: any) {
     res.status(500).json({ success: false, message: 'Failed to delete calendar event.', error: error.message });

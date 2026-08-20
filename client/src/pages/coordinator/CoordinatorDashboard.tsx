@@ -396,9 +396,9 @@ export const CoordinatorDashboard: React.FC = () => {
                 </span>
                 <div className="flex items-center space-x-1">
                   <span className="text-[10px] font-mono text-slate-400">{new Date(item.startDate).toLocaleDateString()}</span>
-                  {item._id && !item._id.startsWith('default-') && (
+                  {(item._id || item.id) && (
                     <button
-                      onClick={() => handleDeleteCalendarItem(item._id, item.title)}
+                      onClick={() => handleDeleteCalendarItem(item._id || item.id, item.title)}
                       className="text-slate-500 hover:text-rose-400 p-0.5 rounded transition cursor-pointer ml-1"
                       title="Delete item"
                     >
